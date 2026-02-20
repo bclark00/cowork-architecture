@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Desktop — Cowork Sandbox Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0a0c0f;
+    --surface:    #111418;
+    --border:     #1e2530;
+    --border-hi:  #2d3a4a;
+    --text:       #c8d4e0;
+    --text-dim:   #5a6a7a;
+    --text-faint: #2e3d4d;
+    --win:        #e8a838;
+    --linux:      #4ec9b0;
+    --network:    #5b9bd5;
+    --danger:     #f05060;
+    --safe:       #4aba72;
+    --pipe:       #9b72cf;
+    --accent:     #f0c040;
+    --glow-win:   rgba(232,168,56,0.15);
+    --glow-linux: rgba(78,201,176,0.15);
+    --glow-net:   rgba(91,155,213,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  h1 {
+    font-family: 'Courier Prime', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    margin-bottom: 36px;
+  }
+
+  .diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 1100px;
+  }
+
+  /* === LAYERS === */
+  .layer {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    position: relative;
+  }
+
+  .layer-label {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    white-space: nowrap;
+    width: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .layer-content {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    padding: 16px;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .layer-win   { background: rgba(232,168,56,0.04); border: 1px solid rgba(232,168,56,0.18); }
+  .layer-linux { background: rgba(78,201,176,0.04); border: 1px solid rgba(78,201,176,0.18); }
+  .layer-net   { background: rgba(91,155,213,0.04); border: 1px solid rgba(91,155,213,0.18); }
+
+  .layer-win   .layer-label { color: rgba(232,168,56,0.4); }
+  .layer-linux .layer-label { color: rgba(78,201,176,0.4); }
+  .layer-net   .layer-label { color: rgba(91,155,213,0.4); }
+
+  /* === BOXES === */
+  .box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 14px;
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .box:hover { border-color: var(--border-hi); }
+
+  .box-title {
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .box-title .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 400;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tag-win   { background: rgba(232,168,56,0.15); color: var(--win); border: 1px solid rgba(232,168,56,0.3); }
+  .tag-linux { background: rgba(78,201,176,0.15); color: var(--linux); border: 1px solid rgba(78,201,176,0.3); }
+  .tag-sys   { background: rgba(240,80,96,0.15);  color: var(--danger); border: 1px solid rgba(240,80,96,0.3); }
+  .tag-safe  { background: rgba(74,186,114,0.15); color: var(--safe); border: 1px solid rgba(74,186,114,0.3); }
+  .tag-open  { background: rgba(155,114,207,0.15); color: var(--pipe); border: 1px solid rgba(155,114,207,0.3); }
+
+  .item {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 2px 0;
+    padding-left: 10px;
+    position: relative;
+  }
+
+  .item::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--text-faint);
+  }
+
+  .item.highlight { color: var(--text); }
+  .item.warn { color: var(--danger); }
+  .item.ok   { color: var(--safe); }
+  .item.note { color: var(--pipe); }
+
+  /* === ARROWS / CONNECTORS === */
+  .connector-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 34px;
+    margin: -1px 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .arrow-col {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .arrow-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
+  }
+
+  .arrow-label {
+    font-size: 10px;
+    color: var(--text-faint);
+    white-space: nowrap;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--bg);
+    letter-spacing: 0.05em;
+  }
+
+  .arrow-label.down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .arrow-label.auth   { border-color: rgba(232,168,56,0.3); color: var(--win); }
+  .arrow-label.open   { border-color: rgba(155,114,207,0.3); color: var(--pipe); }
+  .arrow-label.mitm   { border-color: rgba(240,80,96,0.3); color: var(--danger); }
+  .arrow-label.virtiofs { border-color: rgba(78,201,176,0.3); color: var(--linux); }
+  .arrow-label.net    { border-color: rgba(91,155,213,0.3); color: var(--network); }
+
+  /* vertical connectors */
+  .vconn {
+    display: flex;
+    padding: 0 34px;
+    gap: 12px;
+  }
+
+  .vconn-spacer { width: 18px; flex-shrink: 0; }
+
+  .vconn-content {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+  }
+
+  .vcol {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .vline {
+    width: 1px;
+    height: 24px;
+    background: linear-gradient(180deg, transparent, var(--border-hi), transparent);
+    position: relative;
+  }
+
+  .vline::after {
+    content: '▼';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--border-hi);
+  }
+
+  .vline.auth::after    { color: var(--win); }
+  .vline.open::after    { color: var(--pipe); }
+  .vline.virtiofs::after { color: var(--linux); }
+
+  /* === FINDINGS PANEL === */
+  .findings {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .finding-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px;
+  }
+
+  .finding-card.critical { border-color: rgba(240,80,96,0.4); background: rgba(240,80,96,0.04); }
+  .finding-card.notable  { border-color: rgba(155,114,207,0.4); background: rgba(155,114,207,0.04); }
+  .finding-card.neutral  { border-color: rgba(78,201,176,0.3); background: rgba(78,201,176,0.03); }
+
+  .finding-title {
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+  }
+
+  .finding-card.critical .finding-title { color: var(--danger); }
+  .finding-card.notable  .finding-title { color: var(--pipe); }
+  .finding-card.neutral  .finding-title { color: var(--linux); }
+
+  .finding-body {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .finding-body code {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  /* === DATA FLOW === */
+  .flow-section {
+    margin-top: 32px;
+  }
+
+  .flow-title {
+    font-family: 'Courier Prime', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .flow-node {
+    padding: 5px 10px;
+    border-radius: 2px;
+    font-size: 10px;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+  }
+
+  .flow-node.win   { border-color: rgba(232,168,56,0.3); color: var(--win); background: rgba(232,168,56,0.06); }
+  .flow-node.linux { border-color: rgba(78,201,176,0.3); color: var(--linux); background: rgba(78,201,176,0.06); }
+  .flow-node.net   { border-color: rgba(91,155,213,0.3); color: var(--network); background: rgba(91,155,213,0.06); }
+  .flow-node.red   { border-color: rgba(240,80,96,0.3); color: var(--danger); background: rgba(240,80,96,0.06); }
+  .flow-node.purple { border-color: rgba(155,114,207,0.3); color: var(--pipe); background: rgba(155,114,207,0.06); }
+
+  .flow-arrow {
+    font-size: 10px;
+    color: var(--text-faint);
+    padding: 0 2px;
+  }
+
+  .flow-note {
+    font-size: 9px;
+    color: var(--text-faint);
+    margin-left: 8px;
+    font-style: italic;
+  }
+
+  /* blink animation for MITM */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .mitm-badge {
+    animation: pulse 2s infinite;
+    display: inline-block;
+  }
+
+  .box-win   { box-shadow: inset 0 0 0 1px rgba(232,168,56,0.08); }
+  .box-linux { box-shadow: inset 0 0 0 1px rgba(78,201,176,0.08); }
+
+  .disabled-notice {
+    font-size: 10px;
+    color: var(--danger);
+    padding: 4px 8px;
+    border: 1px dashed rgba(240,80,96,0.4);
+    border-radius: 2px;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ===== RESPONSIVE ===== */
+
+  /* Tablet: 2-col findings, minor tightening */
+  @media (max-width: 900px) {
+    body { padding: 20px 16px; }
+
+    .findings {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .diagram { max-width: 100%; }
+    .flow-section, .findings { max-width: 100%; }
+  }
+
+  /* Mobile: full single-column layout */
+  @media (max-width: 640px) {
+    body {
+      padding: 16px 12px;
+      font-size: 11px;
+    }
+
+    h1 { font-size: 13px; letter-spacing: 0.12em; }
+    .subtitle { font-size: 10px; margin-bottom: 20px; }
+
+    /* Layers: stack label above content, not sideways */
+    .layer {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .layer-label {
+      writing-mode: horizontal-tb;
+      transform: none;
+      width: auto;
+      font-size: 9px;
+      padding: 4px 8px;
+      text-align: left;
+      justify-content: flex-start;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .layer-win   .layer-label { border-bottom-color: rgba(232,168,56,0.3); }
+    .layer-linux .layer-label { border-bottom-color: rgba(78,201,176,0.3); }
+    .layer-net   .layer-label { border-bottom-color: rgba(91,155,213,0.3); }
+
+    /* Layer content: stack boxes vertically */
+    .layer-content {
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    /* Override any inline flex values on boxes */
+    .box, .layer-content .box {
+      flex: none !important;
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* Connector rows: stack labels vertically */
+    .connector-row {
+      flex-direction: column;
+      padding: 4px 12px;
+      gap: 4px;
+      align-items: stretch;
+    }
+
+    .arrow-col {
+      justify-content: flex-start;
+    }
+
+    .arrow-line { display: none; }
+
+    .arrow-label {
+      font-size: 9px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* Vertical connectors: shorter, fewer columns on mobile */
+    .vconn {
+      padding: 0 12px;
+    }
+
+    .vconn-spacer { width: 0; }
+
+    .vline { height: 14px; }
+
+    /* Flow traces: always wrap, bigger text  */
+    .flow {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+
+    .flow-node {
+      font-size: 9px;
+      padding: 4px 7px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .flow-arrow { font-size: 9px; }
+
+    .flow-note {
+      width: 100%;
+      margin-left: 0;
+      margin-top: 2px;
+    }
+
+    /* Findings: single column */
+    .findings {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .finding-body { font-size: 10px; }
+
+    /* Box titles: allow wrapping */
+    .box-title {
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+
+    .item { font-size: 10px; }
+
+    /* Footer */
+    div[style*="font-size:10px"] {
+      font-size: 9px !important;
+      word-break: break-word;
+    }
+  }
+
+  /* Very small phones */
+  @media (max-width: 380px) {
+    body { padding: 12px 10px; }
+    .layer-content { padding: 8px; }
+    .box { padding: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Claude Desktop &mdash; Cowork Sandbox Architecture</h1>
+<p class="subtitle">Reconstructed from binary analysis, pipe interrogation, asar extraction &bull; 2026-02-19</p>
+
+<div class="diagram">
+
+  <!-- ====================== WINDOWS HOST LAYER ====================== -->
+  <div class="layer layer-win">
+    <div class="layer-label">Windows Host</div>
+    <div class="layer-content">
+
+      <div class="box box-win">
+        <div class="box-title">
+          claude.exe (Electron/Chromium)
+          <span class="tag tag-win">Win32</span>
+          <span class="tag tag-sys">SYSTEM cert</span>
+        </div>
+        <div class="item highlight">Signed: Anthropic, PBC</div>
+        <div class="item highlight">Thumbprint: dbde5d16768ed0c1...</div>
+        <div class="item">Renderer process (Claude UI)</div>
+        <div class="item">IPC &rarr; main process &rarr; cowork-svc pipe</div>
+        <div class="item">Client certificate embedded in binary</div>
+        <div class="item note">Only binary that can authenticate to cowork-svc</div>
+      </div>
+
+      <div class="box box-win">
+        <div class="box-title">
+          cowork-svc.exe (Windows Service)
+          <span class="tag tag-win">Go binary</span>
+          <span class="tag tag-sys">SYSTEM</span>
+        </div>
+        <div class="item highlight">Named pipe: <code>\\.\pipe\cowork-vm-service</code></div>
+        <div class="item highlight">Transport: uint32-BE length + JSON</div>
+        <div class="item warn">Auth: mutual TLS cert verification on ALL methods</div>
+        <div class="item ok">EXCEPT: <code>subscribeEvents</code> &mdash; open to any caller</div>
+        <div class="item">Methods: configure, createVM, startVM, stopVM,</div>
+        <div class="item">&nbsp;&nbsp;isRunning, isGuestConnected, spawn, kill,</div>
+        <div class="item">&nbsp;&nbsp;writeStdin, isProcessRunning, mountPath,</div>
+        <div class="item">&nbsp;&nbsp;readFile, installSdk, addApprovedOauthToken,</div>
+        <div class="item">&nbsp;&nbsp;setDebugLogging, subscribeEvents</div>
+        <div class="item">Persistent: survives MCP restarts, Claude sessions</div>
+        <div class="disabled-notice">! VM support DISABLED on this machine (win32/x64)</div>
+      </div>
+
+      <div class="box box-win" style="flex: 0.5">
+        <div class="box-title">
+          Bundle Assets
+          <span class="tag tag-win">Resources</span>
+        </div>
+        <div class="item highlight"><code>smol-bin.x64.vhdx</code> &mdash; 36 MB</div>
+        <div class="item highlight"><code>default.clod</code> &mdash; 96 KB</div>
+        <div class="item note">Contains: sandbox-helper, sdk-daemon</div>
+        <div class="item">Linux ELF64 binaries for guest</div>
+        <div class="item">Also loose on C:\Users\sethi\:</div>
+        <div class="item">&nbsp;&nbsp;sandbox-helper (2 MB)</div>
+        <div class="item">&nbsp;&nbsp;sdk-daemon (7.7 MB)</div>
+        <div class="item">sdk-daemon sha256: e232357e...</div>
+        <div class="item">sandbox-helper sha256: 8c6c5a22...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================== CONNECTOR: Win -> VM ====================== -->
+  <div class="vconn">
+    <div class="vconn-spacer"></div>
+    <div class="vconn-content">
+      <div class="vcol">
+        <div class="vline auth"></div>
+      </div>
+      <div class="vcol">
+        <div class="vline virtiofs"></div>
+      </div>
+      <div class="vcol">
+        <div class="vline open"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector-row">
+    <div class="arrow-col"><div class="arrow-label auth">HCS/HCN API &rarr; Hyper-V</div></div>
+    <div class="arrow-col"><div class="arrow-label virtiofs">virtiofs / Plan9 mounts</div></div>
+    <div class="arrow-col"><div class="arrow-label open">subscribeEvents (open) &mdash; stdout/stderr/exit/network stream</div></div>
+  </div>
+
+  <div class="vconn">
+    <div class="vconn-spacer"></div>
+    <div class="vconn-content">
+      <div class="vcol"><div class="vline virtiofs"></div></div>
+      <div class="vcol"><div class="vline virtiofs"></div></div>
+      <div class="vcol"><div class="vline open"></div></div>
+    </div>
+  </div>
+
+  <!-- ====================== LINUX VM LAYER ====================== -->
+  <div class="layer layer-linux">
+    <div class="layer-label">Linux VM Guest</div>
+    <div class="layer-content">
+
+      <div class="box box-linux">
+        <div class="box-title">
+          Hyper-V VM (Linux)
+          <span class="tag tag-linux">rootfs.vhdx</span>
+        </div>
+        <div class="item highlight">Boot: vmlinuz + initrd from claudevm.bundle</div>
+        <div class="item highlight"><code>/mnt/.virtiofs-root</code> &rarr; host share mount</div>
+        <div class="item">virtiofs: host dirs &rarr; guest mountpoints</div>
+        <div class="item">sharedCwdPath: project dir mounted read-write</div>
+        <div class="item">additionalMounts: per-spawn host paths</div>
+        <div class="item">Session disk: per-conversation overlay VHDX</div>
+        <div class="item">User: created via useradd, uid/gid from host</div>
+      </div>
+
+      <div class="box box-linux">
+        <div class="box-title">
+          sdk-daemon
+          <span class="tag tag-linux">ELF64 / root</span>
+        </div>
+        <div class="item highlight">MITM proxy: <code>/var/run/mitm-proxy.sock</code></div>
+        <div class="item highlight warn">TLS intercept: <span class="mitm-badge">*.anthropic.com</span></div>
+        <div class="item">CA cert: <code>/usr/local/share/ca-certificates/mitm-proxy-ca.crt</code></div>
+        <div class="item">Network allowlist enforced (srt-settings.json)</div>
+        <div class="item note">GitHub: proxied but NOT TLS-stripped</div>
+        <div class="item warn">OAuth tokens: must be approved via addApprovedOauthToken</div>
+        <div class="item">[updater] detects file changes: old hash vs new hash</div>
+        <div class="item">coworkd: manages virtiofs mounts, user creation</div>
+        <div class="item">Event stream: stdout / stderr / exit / networkStatus / apiReachability</div>
+        <div class="item">Wire: goproxy (MITM library)</div>
+      </div>
+
+      <div class="box box-linux">
+        <div class="box-title">
+          sandbox-helper
+          <span class="tag tag-linux">ELF64 / setuid</span>
+          <span class="tag tag-safe">priv-drop</span>
+        </div>
+        <div class="item highlight"><code>sandbox-helper &lt;uid&gt; &lt;gid&gt; &lt;cmd&gt; [args...]</code></div>
+        <div class="item">Reads: <code>/etc/srt-settings.base.json</code></div>
+        <div class="item">setuid &rarr; setgid &rarr; exec(command)</div>
+        <div class="item">Pipe: stdout/stderr &rarr; sdk-daemon event stream</div>
+        <div class="item">Shell-escapes args (al.essio.dev/shellescape)</div>
+        <div class="item">BuildSrtCommand: assembles safe shell invocation</div>
+        <div class="item note">Purpose: drop from root to user UID before exec</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================== CONNECTOR: VM -> Network ====================== -->
+  <div class="vconn">
+    <div class="vconn-spacer"></div>
+    <div class="vconn-content">
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(240,80,96,0.5),transparent)"></div></div>
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+    </div>
+  </div>
+
+  <div class="connector-row">
+    <div class="arrow-col"><div class="arrow-label net">allowlisted traffic (npm, pypi, github, ubuntu, crates.io)</div></div>
+    <div class="arrow-col"><div class="arrow-label mitm"><span class="mitm-badge">MITM</span> api.anthropic.com: TLS decrypt &rarr; inspect &rarr; re-encrypt</div></div>
+    <div class="arrow-col"><div class="arrow-label net">blocked: everything not in allowedDomains</div></div>
+  </div>
+
+  <div class="vconn">
+    <div class="vconn-spacer"></div>
+    <div class="vconn-content">
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(240,80,96,0.5),transparent)"></div></div>
+      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+    </div>
+  </div>
+
+  <!-- ====================== NETWORK LAYER ====================== -->
+  <div class="layer layer-net">
+    <div class="layer-label">Internet</div>
+    <div class="layer-content">
+
+      <div class="box" style="flex:0.6">
+        <div class="box-title">Package Registries</div>
+        <div class="item">registry.npmjs.org</div>
+        <div class="item">pypi.org / pythonhosted.org</div>
+        <div class="item">crates.io</div>
+        <div class="item">yarnpkg.com</div>
+        <div class="item">archive/security.ubuntu.com</div>
+        <div class="item ok">Proxied, not TLS-stripped</div>
+        <div class="item warn">GitHub OAuth tokens need approval</div>
+      </div>
+
+      <div class="box" style="flex:0.4; border-color:rgba(240,80,96,0.4); background:rgba(240,80,96,0.04)">
+        <div class="box-title" style="color:var(--danger)">api.anthropic.com <span class="mitm-badge">&#x26A0;</span></div>
+        <div class="item warn">Full TLS interception by sdk-daemon</div>
+        <div class="item warn">Every API call decrypted + inspected</div>
+        <div class="item warn">Proxy CA installed as trusted root</div>
+        <div class="item">Claude API, Statsig, Sentry</div>
+        <div class="item note">*.anthropic.com wildcard</div>
+      </div>
+
+      <div class="box" style="flex:0.5">
+        <div class="box-title">github.com</div>
+        <div class="item">Allowlisted, not TLS-stripped</div>
+        <div class="item warn">OAuth token checked against approvedTokens</div>
+        <div class="item warn">Token passed via addApprovedOauthToken</div>
+        <div class="item">git clone, API calls, repo access</div>
+        <div class="item note">Proxy sees all traffic patterns + timing</div>
+      </div>
+
+      <div class="box" style="flex:0.5; border-color:rgba(240,80,96,0.3); background:rgba(240,80,96,0.03)">
+        <div class="box-title" style="color:var(--danger)">Everything Else</div>
+        <div class="item warn">BLOCKED by sdk-daemon allowlist</div>
+        <div class="item">deniedDomains: [] (allowlist is the gate)</div>
+        <div class="item">allowLocalBinding: true</div>
+        <div class="item note">[proxy] blocking request - domain not allowed</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /diagram -->
+
+<!-- ====================== DATA FLOW TRACES ====================== -->
+<div class="flow-section" style="margin-top:36px; max-width:1100px">
+  <div class="flow-title">Critical Data Flow Traces</div>
+
+  <div class="flow">
+    <div class="flow-node win">User types in Claude UI</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node win">claude.exe renderer</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node win">IPC &rarr; main process</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node win">cowork-svc pipe (Anthropic cert)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">sdk-daemon spawn()</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">sandbox-helper uid/gid</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">user process</div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-node linux">user process stdout</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">sdk-daemon event stream</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node purple">subscribeEvents (ANY caller)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node win">claude.exe UI update</div>
+    <div class="flow-note">* event stream open to unsigned clients</div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-node linux">vm process: fetch api.anthropic.com</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node red">sdk-daemon MITM proxy</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node red">TLS decrypt (own CA)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node red">inspect plaintext API call</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node red">re-encrypt &rarr; forward</div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-node linux">vm process: git push (GitHub)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">sdk-daemon proxy</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">check approvedTokens list</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node net">forward (TLS not stripped)</div>
+    <div class="flow-note">* token must be whitelisted via addApprovedOauthToken from claude.exe</div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-node linux">sdk-daemon [updater]</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">file change detected (old hash != new hash)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node linux">event: type=update, old=..., new=...</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node purple">subscribeEvents stream</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node win">claude.exe handler</div>
+    <div class="flow-note">* candidate explanation for 23:15 tool-cdn restoration</div>
+  </div>
+
+</div>
+
+<!-- ====================== FINDINGS ====================== -->
+<div class="findings" style="max-width:1100px">
+
+  <div class="finding-card critical">
+    <div class="finding-title">MITM on *.anthropic.com</div>
+    <div class="finding-body">
+      sdk-daemon installs its own CA certificate and performs full TLS interception on all traffic to <code>*.anthropic.com</code> from inside the VM. Every API call — including Claude completions, auth tokens, and telemetry — is decrypted, inspectable, and re-encrypted before leaving the machine. This is by design: Anthropic can inject headers, observe prompts, enforce policy, or modify responses at the proxy layer.
+    </div>
+  </div>
+
+  <div class="finding-card critical">
+    <div class="finding-title">subscribeEvents: No Auth</div>
+    <div class="finding-body">
+      The only unauthenticated method on the cowork-svc pipe. Any process can subscribe and receive real-time stdout/stderr/exit/network events from whatever the VM is running. On machines where the VM is active, this leaks all process output — including AI responses, code execution results, and file contents — to any local listener.
+    </div>
+  </div>
+
+  <div class="finding-card notable">
+    <div class="finding-title">Tool-CDN Restoration (23:15)</div>
+    <div class="finding-body">
+      sdk-daemon's <code>[updater]</code> compares old vs new file hashes. When catabolism.js was modified (breaking exeray-mcp.js), the updater detected drift from the original deployment hash and triggered restoration via the virtiofs mount — writing back through the guest-to-host share. Writer PID null in RDCX because the Go process exits before chokidar processes the notification.
+    </div>
+  </div>
+
+  <div class="finding-card notable">
+    <div class="finding-title">GitHub OAuth Token Gate</div>
+    <div class="finding-body">
+      GitHub traffic is proxied but not TLS-decrypted. However, OAuth tokens are intercepted and validated against an in-memory approved list managed by cowork-svc via <code>addApprovedOauthToken</code>. Tokens must be explicitly passed from claude.exe. The proxy logs: <code>[proxy] added approved OAuth token (hash: %x...)</code> on each addition.
+    </div>
+  </div>
+
+  <div class="finding-card neutral">
+    <div class="finding-title">VM Disabled on This Machine</div>
+    <div class="finding-body">
+      cowork-svc logs <code>VM not supported (win32/x64)</code> — Hyper-V is either absent or disabled. The service runs with SYSTEM privileges and holds the pipe open but cannot start a VM. All VM-gated methods return auth errors from our probes. The <code>subscribeEvents</code> endpoint returns <code>success:true</code> then immediately closes — no active sessions.
+    </div>
+  </div>
+
+  <div class="finding-card neutral">
+    <div class="finding-title">Cert Architecture</div>
+    <div class="finding-body">
+      cowork-svc embeds the expected client thumbprint (<code>dbde5d16768ed0c1</code>) and validates every connection except subscribeEvents. Claude.exe is signed by Anthropic, PBC and passes. Node.js (OpenJS Foundation) fails. This prevents MCP servers or arbitrary local processes from controlling the VM — all VM operations must flow through the signed Electron binary.
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:36px; max-width:1100px; font-size:10px; color:var(--text-faint); border-top:1px solid var(--border); padding-top:12px">
+  Sources: app.asar extraction (index.js vm-client code) &bull; cowork-svc.exe pipe interrogation (80 probes) &bull; sdk-daemon-strings.json (20,422 strings) &bull; sandbox-helper-strings.json (6,242 strings) &bull; srt-settings.json &bull; audit-nexus fs_events (625,806 rows) &bull; cowork-event-feed active (PID 2388)
+</div>
+
+</body>
+</html>
