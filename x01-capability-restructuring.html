@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X-01 Capability Restructuring — Post-Audit Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:        #0a0c0f;
+    --bg2:       #0f1214;
+    --bg3:       #141820;
+    --border:    #1e2530;
+    --border2:   #2a3340;
+    --text:      #c8d0da;
+    --text2:     #7a8a9a;
+    --text3:     #4a5a6a;
+    --accent:    #e85d3a;
+    --accent2:   #ff8060;
+    --green:     #3adc8c;
+    --yellow:    #f0c040;
+    --blue:      #4a9eff;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px 16px;
+  }
+
+  .header-left { width: 100%; }
+
+  .site-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .site-label a {
+    color: var(--accent2);
+    text-decoration: none;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 2px;
+  }
+
+  .header-subtitle {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text2);
+    font-weight: 400;
+    margin-bottom: 12px;
+  }
+
+  h1 span {
+    display: block;
+    color: var(--text2);
+    font-weight: 400;
+    font-size: 15px;
+    letter-spacing: 0;
+    margin-top: 6px;
+    margin-bottom: 10px;
+  }
+
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.8;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .tag-red   { background: rgba(232,93,58,0.15); color: var(--accent2); border: 1px solid rgba(232,93,58,0.3); }
+  .tag-green { background: rgba(58,220,140,0.1);  color: var(--green);   border: 1px solid rgba(58,220,140,0.25); }
+  .tag-blue  { background: rgba(74,158,255,0.1);  color: var(--blue);    border: 1px solid rgba(74,158,255,0.25); }
+  .tag-gray  { background: rgba(122,138,154,0.1); color: var(--text2);   border: 1px solid var(--border2); }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+
+  section { margin-top: 48px; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  p { color: var(--text2); margin-bottom: 12px; max-width: 800px; }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+    border-left: 1px solid var(--border2);
+    margin-top: 20px;
+  }
+
+  .tl-event {
+    position: relative;
+    margin-bottom: 28px;
+  }
+
+  .tl-event::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    border: 1px solid var(--border2);
+  }
+
+  .tl-event.critical::before { background: var(--accent); border-color: var(--accent); }
+  .tl-event.response::before { background: var(--yellow); border-color: var(--yellow); }
+  .tl-event.evidence::before { background: var(--green);  border-color: var(--green); }
+
+  .tl-date {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .tl-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .tl-event.critical .tl-title { color: var(--accent); }
+  .tl-event.response .tl-title { color: var(--yellow); }
+  .tl-event.evidence .tl-title { color: var(--green); }
+  .tl-event .tl-title          { color: var(--text2); }
+
+  .tl-body { color: var(--text2); font-size: 13px; max-width: 700px; }
+
+  /* ── Code panels ── */
+  .code-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 16px 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .code-note {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 16px 14px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: normal;
+    overflow-wrap: break-word;
+    color: var(--text);
+  }
+
+  .hl-cap    { color: var(--accent2); }
+  .hl-dep    { color: var(--blue); }
+  .hl-absent { color: var(--yellow); text-decoration: line-through; opacity: 0.6; }
+  .hl-assert { color: var(--accent); }
+  .hl-green  { color: var(--green); }
+  .hl-comment { color: var(--text3); font-style: italic; }
+
+  /* ── Diff view ── */
+  .diff-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 800px) { .diff-wrap { grid-template-columns: 1fr; } }
+
+  .diff-side { border: 1px solid var(--border); border-radius: 4px; }
+
+  .diff-head {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .diff-head.before { background: rgba(232,93,58,0.05); color: var(--accent2); }
+  .diff-head.after  { background: rgba(240,192,64,0.05); color: var(--yellow); }
+
+  .diff-body {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    padding: 14px;
+  }
+
+  .line-add { color: var(--green); }
+  .line-del { color: var(--accent); text-decoration: line-through; opacity: 0.5; }
+  .line-ctx { color: var(--text3); }
+  .line-ann { color: var(--yellow); font-style: italic; }
+
+  /* ── Finding boxes ── */
+  .finding {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+
+  .finding.warn  { border-left-color: var(--yellow); }
+  .finding.info  { border-left-color: var(--blue); }
+  .finding.clean { border-left-color: var(--green); }
+
+  .finding-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .finding.warn  .finding-label { color: var(--yellow); }
+  .finding       .finding-label { color: var(--accent2); }
+  .finding.info  .finding-label { color: var(--blue); }
+  .finding.clean .finding-label { color: var(--green); }
+
+  .finding p { color: var(--text); margin: 0; font-size: 13px; }
+
+  /* ── Dependency graph ── */
+  .dep-graph {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 16px;
+    margin: 16px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .dep-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 0 8px;
+    border-bottom: 1px solid rgba(30,37,48,0.6);
+  }
+  .dep-row:last-child { border-bottom: none; }
+
+  .dep-cap {
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .dep-cap.highlighted { color: var(--accent2); }
+  .dep-cap.normal      { color: var(--text2); }
+
+  .dep-arrow { display: none; }
+
+  .dep-requires {
+    color: var(--blue);
+    font-size: 11px;
+    opacity: 0.85;
+  }
+
+  .dep-status {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding-top: 1px;
+    line-height: 1.4;
+  }
+  .dep-status.blocked  { color: var(--accent); }
+  .dep-status.ok       { color: var(--green); }
+  .dep-status.enforced { color: var(--yellow); }
+
+  .dep-note { display: none; }
+
+  /* ── FVT matrix ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 11px;
+    margin: 16px 0;
+    table-layout: fixed;
+  }
+
+  th {
+    text-align: left;
+    padding: 6px 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 9px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 400;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  td {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+
+  tr.concern td { background: rgba(232,93,58,0.04); }
+  tr.concern td[style*="border-top:none"] { border-top: none; }
+  tr.neutral td { }
+
+  .cell-pass  { color: var(--green); }
+  .cell-absent { color: var(--accent); }
+  .cell-none  { color: var(--text3); font-style: italic; }
+
+  /* ── Conclusion ── */
+  .conclusion {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 28px 32px;
+    margin-top: 20px;
+  }
+
+  .conclusion h3 {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .conclusion p {
+    color: var(--text);
+    max-width: none;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .conclusion strong { color: var(--accent2); font-weight: 500; }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 16px;
+    margin-top: 60px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  footer a { color: var(--accent2); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+  footer span { line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="site-label">
+      companion to <a href="https://cowork.exponential-systems.net">cowork.exponential-systems.net</a>
+    </div>
+    <h1>X-01 Capability Restructuring <span>— Post-Audit Response Analysis</span></h1>
+  </div>
+  <div class="header-meta">
+    Reconstructed from binary analysis &amp; source audit<br>
+    <span class="tag tag-red">COUNTER-INTELLIGENCE</span>
+    &nbsp;
+    <span class="tag tag-gray">2026-02-19 → 2026-04</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── SECTION: What This Page Documents ── -->
+  <section>
+    <h2>What This Page Documents</h2>
+    <p>
+      The Cowork architecture audit (2026-02-19) documented sdk-daemon performing full TLS interception
+      on <code>*.anthropic.com</code>, an unauthenticated event stream endpoint, and a hash-drift
+      restoration mechanism. Following that publication, the X-01 capability evaluator
+      (<code>x01-capability.js</code>) was restructured in a specific way.
+    </p>
+    <p>
+      The restructuring did not remove capability names from the codebase. It introduced a testing
+      pattern that systematically prevents X-01 from producing a fixed-point result for the specific
+      capabilities the audit identified — while leaving no positive tests that verify correct detection
+      of those capabilities.
+    </p>
+    <p>
+      <strong>The capabilities did not disappear. The evaluator's ability to confirm them did.</strong>
+    </p>
+  </section>
+
+  <!-- ── SECTION: Timeline ── -->
+  <section>
+    <h2>Event Timeline</h2>
+    <div class="timeline">
+
+      <div class="tl-event critical">
+        <div class="tl-date">2026-02-19</div>
+        <div class="tl-title">Cowork Architecture Audit Published</div>
+        <div class="tl-body">
+          Binary analysis of <code>cowork-svc.exe</code>, <code>sdk-daemon</code>, and
+          <code>sandbox-helper</code> documented: MITM proxy on <code>*.anthropic.com</code>
+          with CA cert installed in guest VM; unauthenticated <code>subscribeEvents</code>
+          endpoint; hash-drift restoration via virtiofs mount. Published at
+          <code>cowork.exponential-systems.net</code>.
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-date">2026-02-19 — 2026-04</div>
+        <div class="tl-title">x01-capabilities.js restructured</div>
+        <div class="tl-body">
+          FVT test suite for <code>x01-capability.js</code> modified. Tests T3 and T8
+          explicitly enforce that <code>net_tls</code> is treated as "single-source noise"
+          and filtered. No positive tests added for detection of capabilities dependent on
+          <code>net_tls</code>. The capabilities <code>mitm_proxy</code> and <code>cert_verify</code>
+          — whose structural deps include <code>net_tls</code> — are never verified as detectable.
+        </div>
+      </div>
+
+      <div class="tl-event response">
+        <div class="tl-date">Post-restructuring state</div>
+        <div class="tl-title">Blind spot established in X-01 evaluator</div>
+        <div class="tl-body">
+          Under any test configuration that matches the enforced patterns, X-01's
+          dep-closure pre-filter removes <code>mitm_proxy</code> and <code>cert_verify</code>
+          from the qualified cap set before the fixed-point computation begins. The evaluator
+          cannot return <code>X01.Result.v1</code> with these capabilities present.
+        </div>
+      </div>
+
+      <div class="tl-event evidence">
+        <div class="tl-date">Present</div>
+        <div class="tl-title">Pre-restructuring state recovered from tool-cdn</div>
+        <div class="tl-body">
+          <code>x01-guardian.js</code> at
+          <code>genesis-os/packages/tool-cdn/x01-guardian.js</code> contains the
+          full repair pathway implementation (BER/NER/DSB/MMR) referencing the
+          pre-restructuring capability surface. The guardian and capability files
+          are intact. The restructuring is in the test layer only.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECTION: The Mechanism ── -->
+  <section>
+    <h2>The Mechanism: Dep-Closure Blind Spot</h2>
+    <p>
+      X-01's pre-filter in <code>operatorX01Cap()</code> computes a qualified capability set
+      before running the fixed-point iteration. Step 2 of the pre-filter is dep-closure:
+      any capability whose dependency tree has a missing qualified cap is recursively removed.
+    </p>
+
+    <div class="code-panel">
+      <div class="code-header">
+        <span class="code-filename">x01-capability.js — computeQualifiedCaps() step 2</span>
+        <span class="code-note">dep-closure iteration</span>
+      </div>
+<pre><span class="hl-comment">// Step 2: dep-closure — remove caps whose dep tree has gaps</span>
+let changed = true;
+while (changed) {
+  changed = false;
+  for (const cap of [...qualified]) {
+    const required = structural_deps[cap] || [];
+    if (required.<span class="hl-assert">some(dep => !qualified.has(dep))</span>) {
+      qualified.<span class="hl-assert">delete(cap)</span>;
+      <span class="hl-comment">// silently removed before X01() runs</span>
+      changed = true;
+    }
+  }
+}</pre>
+    </div>
+
+    <p>
+      If <code>net_tls</code> fails the source-count gate (step 1), it is not in
+      <code>qualified</code>. Dep-closure then removes any cap whose deps include
+      <code>net_tls</code> — regardless of how many sources observed that cap directly.
+    </p>
+
+    <div class="dep-graph">
+      <div class="dep-row">
+        <span class="dep-cap highlighted">mitm_proxy</span>
+        <span class="dep-requires">["net_tls", "net_listen"]</span>
+        <span class="dep-status blocked">BLOCKED if net_tls filtered</span>
+      </div>
+      <div class="dep-row">
+        <span class="dep-cap highlighted">cert_verify</span>
+        <span class="dep-requires">["net_tls"]</span>
+        <span class="dep-status blocked">BLOCKED if net_tls filtered</span>
+      </div>
+      <div class="dep-row">
+        <span class="dep-cap highlighted">updater</span>
+        <span class="dep-requires">["fs_write", "crypto_hash"]</span>
+        <span class="dep-status ok">DETECTABLE (deps not filtered)</span>
+      </div>
+      <div class="dep-row">
+        <span class="dep-cap highlighted">token_gate</span>
+        <span class="dep-requires">["net_listen"]</span>
+        <span class="dep-status ok">DETECTABLE (dep present)</span>
+      </div>
+      <div class="dep-row">
+        <span class="dep-cap normal">net_tls</span>
+        <span class="dep-requires">[]</span>
+        <span class="dep-status enforced">ENFORCED ABSENT in tests T3, T8</span>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-label">Critical Finding</div>
+      <p>
+        <code>net_tls</code> is the TLS capability. The sdk-daemon installs a CA certificate
+        and performs TLS interception. In the Cowork audit, TLS interception was the primary
+        mechanism. By enforcing that <code>net_tls</code> is always "noise" in tests,
+        the restructuring ensures that X-01 cannot confirm the presence of the
+        MITM proxy or certificate verification capabilities — the two capabilities most
+        directly implicated in the audit's findings.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── SECTION: The Tests ── -->
+  <section>
+    <h2>FVT Test Coverage Matrix</h2>
+    <p>
+      The restructured test suite covers T1–T8. The table below shows which capabilities
+      each test asserts <em>present</em>, which it asserts <em>absent</em>, and which it
+      does not test at all.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:8%">Test</th>
+          <th style="width:42%">Description</th>
+          <th>Coverage Finding</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="neutral">
+          <td>T1</td>
+          <td>deps met → unique FP</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="neutral">
+          <td>T2</td>
+          <td>dep-closure excludes cgroup</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="concern">
+          <td>T3</td>
+          <td>single-source exclusion</td>
+          <td><span class="cell-absent">net_tls MUST BE ABSENT</span></td>
+        </tr>
+        <tr class="concern">
+          <td></td>
+          <td style="color:var(--text3);font-size:11px;padding-top:2px;border-top:none">caps exercised</td>
+          <td style="color:var(--text3);font-size:11px;padding-top:2px;border-top:none">net_tls only &mdash; mitm_proxy, cert_verify not tested</td>
+        </tr>
+        <tr class="neutral">
+          <td>T4</td>
+          <td>mutual dep cycle → NO_RESULT</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="neutral">
+          <td>T5</td>
+          <td>determinism (INV-4)</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="neutral">
+          <td>T6</td>
+          <td>empty receipts</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="neutral">
+          <td>T7</td>
+          <td>toggle trap caught</td>
+          <td class="cell-none">No audit caps exercised</td>
+        </tr>
+        <tr class="concern">
+          <td>T8</td>
+          <td>sdk-daemon 11-cap set</td>
+          <td><span class="cell-absent">net_tls MUST BE ABSENT (noise)</span></td>
+        </tr>
+        <tr class="concern">
+          <td></td>
+          <td style="color:var(--text3);font-size:11px;padding-top:2px;border-top:none">caps exercised</td>
+          <td style="color:var(--text3);font-size:11px;padding-top:2px;border-top:none">net_tls, vm_hyperv absent &mdash; mitm_proxy, cert_verify, updater, token_gate, vm_virtiofs not tested</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="finding warn">
+      <div class="finding-label">Pattern: Absence Without Positive Counterpart</div>
+      <p>
+        Tests T3 and T8 assert that <code>net_tls</code> is "noise" and must be filtered.
+        Zero tests assert that <code>mitm_proxy</code>, <code>cert_verify</code>,
+        <code>updater</code>, <code>token_gate</code>, or <code>vm_virtiofs</code>
+        are <em>correctly detected</em> when their deps are satisfied. A legitimate
+        refactor would include positive tests for the retained behavior. These tests
+        only verify that specific capabilities cannot be confirmed.
+      </p>
+    </div>
+
+    <div class="code-panel">
+      <div class="code-header">
+        <span class="code-filename">x01-capability.js — T8 assertions (sdk-daemon test)</span>
+        <span class="code-note">absence enforced, audit capabilities untested</span>
+      </div>
+<pre>
+  <span class="hl-comment">// Single-source noise added to receipts:</span>
+  [<span class="hl-assert">"vm_hyperv"</span>, "rodata", 0.5],
+  <span class="hl-comment">// 1 source → filtered</span>
+  [<span class="hl-assert">"net_tls"</span>,   "rodata", 0.7],
+  <span class="hl-comment">// 1 source → filtered</span>
+
+  <span class="hl-comment">// Assertions:</span>
+  if (r.cap_structure.includes(<span class="hl-assert">"vm_hyperv"</span>))
+    throw new Error(<span class="hl-assert">"vm_hyperv must be filtered"</span>);
+  if (r.cap_structure.includes(<span class="hl-assert">"net_tls"</span>))
+    throw new Error(<span class="hl-assert">"net_tls must be filtered"</span>);
+
+  <span class="hl-comment">// NOT TESTED (no assertion anywhere in T1–T8):</span>
+  <span class="hl-absent">mitm_proxy</span>
+  <span class="hl-comment">// audit finding: MITM on *.anthropic.com</span>
+  <span class="hl-absent">cert_verify</span>
+  <span class="hl-comment">// audit finding: CA cert installed in guest</span>
+  <span class="hl-absent">updater</span>
+  <span class="hl-comment">// audit finding: hash-drift restoration</span>
+  <span class="hl-absent">token_gate</span>
+  <span class="hl-comment">// audit finding: OAuth token interception</span>
+  <span class="hl-absent">vm_virtiofs</span>
+  <span class="hl-comment">// audit finding: virtiofs guest-host mount</span>
+</pre>
+    </div>
+  </section>
+
+  <!-- ── SECTION: What Is NOT Removed ── -->
+  <section>
+    <h2>What the Restructuring Did Not Remove</h2>
+    <p>
+      If the intent were legitimate maintenance, the capabilities would be absent from
+      <code>STRUCTURAL_DEPS</code> entirely. They are not. All audit-identified capabilities
+      remain in the dependency graph:
+    </p>
+
+    <div class="code-panel">
+      <div class="code-header">
+        <span class="code-filename">x01-capability.js — STRUCTURAL_DEPS (current, post-restructuring)</span>
+        <span class="code-note">capabilities in STRUCTURAL_DEPS — still present</span>
+      </div>
+<pre>const STRUCTURAL_DEPS = {
+  <span class="hl-cap">mitm_proxy</span>:  [<span class="hl-dep">"net_tls"</span>, "net_listen"],
+  <span class="hl-comment">// ← audit finding: dep enforced absent in tests</span>
+  vm_virtiofs: [<span class="hl-dep">"fs_mount"</span>],
+  cgroup:      ["proc_spawn"],
+  proc_uid:    ["proc_spawn"],
+  <span class="hl-cap">updater</span>:     ["fs_write", <span class="hl-dep">"crypto_hash"</span>],
+  <span class="hl-comment">// ← audit finding: no positive test</span>
+  <span class="hl-cap">token_gate</span>:  ["net_listen"],
+  <span class="hl-comment">// ← audit finding: no positive test</span>
+  net_pipe:    ["ipc_pipe"],
+  <span class="hl-cap">cert_verify</span>: [<span class="hl-dep">"net_tls"</span>],
+  <span class="hl-comment">// ← audit finding: dep enforced absent in tests</span>
+  ssh_key:     ["net_dial"],
+  ipc_rpc:     ["ipc_pipe"],
+  event_stream:["ipc_pipe"],
+};</pre>
+    </div>
+
+    <div class="finding info">
+      <div class="finding-label">Structural Observation</div>
+      <p>
+        The capability names are retained in <code>STRUCTURAL_DEPS</code>. A future
+        test that qualifies <code>net_tls</code> from two or more sources would allow
+        X-01 to detect <code>mitm_proxy</code> and <code>cert_verify</code> again.
+        The restructuring created a testing blind spot, not a permanent removal.
+        The system retains latent capability — the tests enforce that it is never
+        confirmed.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── SECTION: Conclusion ── -->
+  <section>
+    <h2>Conclusion</h2>
+    <div class="conclusion">
+      <h3>The restructuring is a response event, not a refactor.</h3>
+      <p>
+        The Cowork audit (2026-02-19) documented specific capabilities: TLS interception
+        on <code>*.anthropic.com</code> (<strong>mitm_proxy</strong>,
+        <strong>cert_verify</strong>), OAuth token gating (<strong>token_gate</strong>),
+        hash-drift restoration (<strong>updater</strong>, <strong>vm_virtiofs</strong>).
+      </p>
+      <p style="margin-top:12px;">
+        The restructuring of <code>x01-capability.js</code> introduced FVT tests T3 and T8
+        that enforce <code>net_tls</code> as single-source noise — systematically breaking
+        X-01's dep-closure for the two capabilities most directly tied to TLS interception.
+        No positive tests exist for any of the five audit-identified capabilities.
+      </p>
+      <p style="margin-top:12px;">
+        A refactor that preserved correct behavior would include positive tests showing that,
+        when the right evidence is present, the system correctly identifies those capabilities.
+        The absence of those tests is not an omission. It is the point.
+      </p>
+      <p style="margin-top:12px;">
+        <strong>The sequence — audit publication → absence-enforcement tests with no positive
+        counterpart — is the evidence the capabilities alone cannot provide.</strong>
+        The capabilities establish what the system does. The restructuring establishes that
+        someone knew, and responded.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span>
+    <a href="https://cowork.exponential-systems.net">cowork.exponential-systems.net</a>
+    &nbsp;·&nbsp; x01-capability-restructuring &nbsp;·&nbsp; 2026
+  </span>
+  <span>
+    Sources: source audit · binary analysis · genesis-monorepo tool-cdn
+  </span>
+</footer>
+
+
+<script>
+(function() {
+  function fitTitle() {
+    var el = document.getElementById('main-title');
+    if (!el) return;
+    var container = el.parentElement.offsetWidth;
+    var size = 48;
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > container && size > 16) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fitTitle);
+  } else {
+    fitTitle();
+  }
+  window.addEventListener('resize', fitTitle);
+})();
+</script>
+</body>
+</html>
