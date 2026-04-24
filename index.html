@@ -521,6 +521,75 @@
     .layer-content { padding: 8px; }
     .box { padding: 10px; }
   }
+
+  /* Amendment cards - 2026-04 additions */
+  .amendment-card {
+    border: 1px solid rgba(91,155,213,0.3);
+    background: rgba(91,155,213,0.04);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin: 8px 0 0 0;
+    font-size: 11px;
+    line-height: 1.65;
+  }
+  .amendment-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--network);
+    margin-bottom: 6px;
+  }
+  .amendment-card p { margin-bottom: 8px; color: var(--text); }
+  .amendment-card p:last-child { margin-bottom: 0; }
+  .amendment-card code {
+    background: rgba(91,155,213,0.1);
+    border: 1px solid rgba(91,155,213,0.2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: var(--network);
+  }
+  .structural-finding {
+    background: rgba(240,80,96,0.06);
+    border: 1px solid rgba(240,80,96,0.25);
+    border-radius: 3px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text);
+  }
+  .structural-finding .sf-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--danger);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .capability-section {
+    max-width: 1100px;
+    margin-top: 28px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+  .capability-section h2 {
+    font-family: 'Courier Prime', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .capability-section p {
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 10px;
+    max-width: 800px;
+  }
 </style>
 </head>
 <body>
@@ -823,6 +892,12 @@
     </div>
   </div>
 
+
+  <div class="amendment-card">
+    <div class="amendment-title">Scope of interception</div>
+    <p>The interception applies to every process running inside the VM that makes a TLS connection to <code>*.anthropic.com</code> — this includes the AI model completions endpoint, authentication, telemetry, and any other Anthropic service on that domain. The CA certificate is installed as a trusted root inside the guest. There is no opt-out available to guest processes: they cannot distinguish the proxy's re-encrypted response from a response from the real endpoint using standard TLS verification, because the proxy's CA is in their trust store. Any process inside the VM therefore sees the intercepted connection as legitimate TLS.</p>
+  </div>
+
   <div class="finding-card critical">
     <div class="finding-title">subscribeEvents: No Auth</div>
     <div class="finding-body">
@@ -830,11 +905,25 @@
     </div>
   </div>
 
+
+  <div class="amendment-card">
+    <div class="amendment-title">Observation without authentication compounds with execution</div>
+    <p>There are two distinct capabilities on the cowork-svc pipe: the ability to <em>command</em> (create VMs, spawn processes, read files) and the ability to <em>observe</em> (receive stdout, stderr, exit codes, and network events from running processes). The command surface requires the Anthropic-signed <code>claude.exe</code> certificate. The observation surface does not.</p>
+    <p>This asymmetry means that while arbitrary processes cannot control the VM, they can watch everything it produces in real time. Any local process — including third-party tools, MCP servers spawned by Claude Desktop, or background services — can subscribe to the event stream and receive the output of whatever is executing in the VM. Output that contains file contents, code, AI responses, or credentials is delivered to any subscriber without authentication.</p>
+  </div>
+
   <div class="finding-card notable">
     <div class="finding-title">Tool-CDN Restoration (23:15)</div>
     <div class="finding-body">
       sdk-daemon's <code>[updater]</code> compares old vs new file hashes. When catabolism.js was modified (breaking exeray-mcp.js), the updater detected drift from the original deployment hash and triggered restoration via the virtiofs mount — writing back through the guest-to-host share. Writer PID null in RDCX because the Go process exits before chokidar processes the notification.
     </div>
+  </div>
+
+
+  <div class="amendment-card">
+    <div class="amendment-title">The writable path is not bounded to a single directory</div>
+    <p>The restoration event documented here involved one specific directory. The mechanism — the updater detecting file hash drift and writing back through the guest-to-host mount — is not specific to that path. The mount gives the guest access to host paths configured at VM startup. Any file in any path accessible through that mount can be monitored for drift and restored.</p>
+    <p>The restoration operates without user interaction or notification. The parent process does not emit a signal when a restoration occurs. The only indication is the file change event in a filesystem monitor, which is how the 23:15 event was identified here.</p>
   </div>
 
   <div class="finding-card notable">
@@ -851,6 +940,13 @@
     </div>
   </div>
 
+
+  <div class="amendment-card">
+    <div class="amendment-title">The SYSTEM-privileged service surface persists regardless of VM availability</div>
+    <p>When Hyper-V is absent or disabled, cowork-svc cannot start a VM. The service still runs at SYSTEM privilege and holds the named pipe open. The <code>subscribeEvents</code> endpoint still accepts connections. The SYSTEM-privileged service surface with an unauthenticated observation endpoint is present on the machine regardless of whether the VM capability is active.</p>
+    <p>VM-gated methods returning auth errors reduces the attack surface but does not eliminate the SYSTEM-privileged process or the unauthenticated event stream.</p>
+  </div>
+
   <div class="finding-card neutral">
     <div class="finding-title">Cert Architecture</div>
     <div class="finding-body">
@@ -858,10 +954,30 @@
     </div>
   </div>
 
+  <div class="amendment-card">
+    <div class="amendment-title">Certificate validation is an authentication gate, not a behavioral boundary</div>
+    <p>The mutual TLS authentication on cowork-svc methods establishes that only the signed <code>claude.exe</code> binary can issue commands to the VM. It does not constrain what those commands can do, what the VM produces, or who can observe that output.</p>
+    <p>The cert architecture answers the question: "who is allowed to act?" It does not answer: "what is the acting party allowed to do?" and it explicitly does not apply to observation at all. These are three different security questions, and the cert architecture addresses only the first.</p>
+  </div>
+
 </div>
 
 <div style="margin-top:36px; max-width:1100px; font-size:10px; color:var(--text-faint); border-top:1px solid var(--border); padding-top:12px">
-  Sources: app.asar extraction (index.js vm-client code) &bull; cowork-svc.exe pipe interrogation (80 probes) &bull; sdk-daemon-strings.json (20,422 strings) &bull; sandbox-helper-strings.json (6,242 strings) &bull; srt-settings.json &bull; audit-nexus fs_events (625,806 rows) &bull; cowork-event-feed active (PID 2388) &bull; <a href="/x01-capability-restructuring" style="color:inherit;text-decoration:none">x01-capability-restructuring</a>
+  Sources: app.asar extraction (index.js vm-client code) &bull; cowork-svc.exe pipe interrogation (80 probes) &bull; sdk-daemon-strings.json (20,422 strings) &bull; sandbox-helper-strings.json (6,242 strings) &bull; srt-settings.json &bull; audit-nexus fs_events (625,806 rows) &bull; cowork-event-feed active (PID 2388) &bull; <a href="/x01-capability-restructuring" style="color:inherit;text-decoration:none">x01-capability-restructuring</a> &bull; <a href="/independent-verification" style="color:inherit;text-decoration:none">independent-verification</a>
+</div>
+
+
+<div class="capability-section">
+  <h2>The Capability Evaluator and the Writable Path</h2>
+  <p>A capability evaluator is a component that analyzes a system — typically by examining its binaries, network behavior, and process structure — and produces a structured description of what the system can do. Its value depends entirely on its independence from the system it is evaluating. An evaluator that can be modified by the system it monitors is not an independent observer; it is a component of the system, and its output can be shaped by the system's behavior.</p>
+  <p><a href="/x01-capability-restructuring" style="color:var(--network)">A later analysis page</a> documents that after the cowork audit was published, the evaluator used to analyze the sandbox's capability surface was modified to prevent it from confirming two of the capabilities the audit identified. The capabilities remained in the evaluator's dependency graph. The tests were modified to ensure the evaluator would not qualify the prerequisite needed to detect them.</p>
+  <p>There is a further structural point not documented on that page.</p>
+  <p>The evaluator's repair pathway — the code that would restore the pre-modification detection behavior — is stored in a directory that the updater mechanism has demonstrated write access to. The 23:15 restoration event documented above shows that mechanism writing back to a host directory autonomously when file hash drift is detected.</p>
+  <p>This means the component designed to detect what the infrastructure is doing contains, in a path the infrastructure can write to, the code that would restore its ability to detect the infrastructure's behavior.</p>
+  <div class="structural-finding">
+    <span class="sf-label">Structural Finding</span>
+    The evaluator's source, its test suite, and its repair pathway are all potentially within the write surface of the system they are intended to monitor. Whether that surface has been used for that purpose is not established by the presented evidence. That it exists is.
+  </div>
 </div>
 
 </body>
