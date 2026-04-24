@@ -5,232 +5,222 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Independent Verification of API Traffic — cowork.exponential-systems.net</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+:root {
+  --bg:         #0d1117;
+  --bg-card:    #161b22;
+  --bg-code:    #1c2128;
+  --bg-note:    #111820;
+  --bg-warn:    #1a1200;
+  --bg-crit:    #1a0d0d;
+  --border:     #30363d;
+  --border-note:#1f4068;
+  --border-warn:#6e4c00;
+  --border-crit:#8b2020;
+  --text:       #e6edf3;
+  --text-muted: #8b949e;
+  --text-code:  #aff3c8;
+  --accent:     #58a6ff;
+  --warn:       #d29922;
+  --crit:       #f85149;
+  --green:      #3fb950;
+  --mono: 'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1.75;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Header ── */
+.page-header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+.breadcrumb { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; letter-spacing: 0.04em; }
+.breadcrumb a { color: var(--text-muted); }
+.breadcrumb a:hover { color: var(--accent); }
+h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 0.35rem; }
+.subtitle { font-size: 0.85rem; color: var(--text-muted); }
+.meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 
-  :root {
-    --bg:         #0a0c0f;
-    --surface:    #111418;
-    --border:     #1e2530;
-    --border-hi:  #2d3a4a;
-    --text:       #c8d4e0;
-    --text-dim:   #5a6a7a;
-    --text-faint: #2e3d4d;
-    --win:        #e8a838;
-    --linux:      #4ec9b0;
-    --network:    #5b9bd5;
-    --danger:     #f05060;
-    --safe:       #4aba72;
-    --pipe:       #9b72cf;
-    --accent:     #f0c040;
-  }
+/* Sections */
+h2 {
+  font-size: 1rem; font-weight: 700; color: var(--text);
+  margin: 2.5rem 0 0.9rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border); letter-spacing: 0.01em;
+}
+h3 { font-size: 0.9rem; font-weight: 700; color: var(--accent); margin: 1.6rem 0 0.6rem; }
+p { margin-bottom: 0.9rem; }
+strong { color: var(--text); font-weight: 700; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    line-height: 1.6;
-    min-height: 100vh;
-    padding: 32px 24px;
-    max-width: 860px;
-    margin: 0 auto;
-  }
+/* Code */
+code {
+  font-family: var(--mono); font-size: 0.85em;
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 3px; padding: 0.1em 0.35em; color: var(--text-code);
+}
+pre {
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1.1rem 1.3rem; overflow-x: auto;
+  margin: 1rem 0 1.2rem; font-family: var(--mono);
+  font-size: 0.83rem; line-height: 1.7; color: var(--text-code);
+}
+pre code { background: none; border: none; padding: 0; }
 
-  .breadcrumb {
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 0.08em;
-    margin-bottom: 20px;
-  }
-  .breadcrumb a { color: var(--text-dim); text-decoration: none; }
-  .breadcrumb a:hover { color: var(--network); }
+/* Callouts */
+.note, .warn, .crit {
+  border: 1px solid; border-radius: 4px; padding: 0.9rem 1.1rem;
+  margin: 1.1rem 0 1.3rem; font-size: 0.875rem;
+}
+.note { background: var(--bg-note); border-color: var(--border-note); border-left: 3px solid var(--accent); }
+.note .label { color: var(--accent); }
+.warn { background: var(--bg-warn); border-color: var(--border-warn); border-left: 3px solid var(--warn); }
+.warn .label { color: var(--warn); }
+.crit { background: var(--bg-crit); border-color: var(--border-crit); border-left: 3px solid var(--crit); }
+.crit .label { color: var(--crit); }
+.note .label, .warn .label, .crit .label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; display: block; margin-bottom: 0.35rem;
+}
 
-  h1 {
-    font-family: 'Courier Prime', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
+/* Steps & Env */
+.steps { margin: 1rem 0; }
+.step {
+  display: grid; grid-template-columns: 2rem 1fr; gap: 0.6rem;
+  margin-bottom: 1.2rem; align-items: start;
+}
+.step-num {
+  font-size: 0.7rem; font-weight: 700; color: var(--bg);
+  background: var(--accent); width: 1.4rem; height: 1.4rem;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; margin-top: 0.15rem; flex-shrink: 0;
+}
+.step-body strong { display: block; margin-bottom: 0.25rem; color: var(--text); }
 
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    margin-bottom: 8px;
-  }
+/* Env var list */
+.env-vars {
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.9rem 1.2rem; margin: 0.8rem 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.3rem 1.5rem;
+}
+.env-vars span {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-code);
+}
+.env-vars span.hi { color: var(--crit); font-weight: 700; }
 
-  .meta {
-    font-size: 10px;
-    color: var(--text-faint);
-    border-top: 1px solid var(--border);
-    padding-top: 10px;
-    margin-top: 10px;
-    margin-bottom: 36px;
-  }
-  .meta a { color: var(--text-faint); text-decoration: none; }
-  .meta a:hover { color: var(--network); }
+/* ── Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2rem 0;
+  font-size: 0.85rem;
+}
+th {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.9rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+td {
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.9rem;
+  vertical-align: top;
+  color: var(--text);
+}
+td:first-child { color: var(--crit); font-size: 0.82rem; }
+td:last-child { color: var(--green); font-size: 0.82rem; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
 
-  h2 {
-    font-family: 'Courier Prime', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 32px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  p {
-    font-size: 11px;
-    line-height: 1.7;
-    color: var(--text);
-    margin-bottom: 10px;
-    max-width: 760px;
-  }
-
-  strong { color: var(--text); font-weight: 700; }
-  em { font-style: italic; color: var(--text); }
-
-  a { color: var(--network); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  code {
-    background: rgba(91,155,213,0.1);
-    border: 1px solid rgba(91,155,213,0.2);
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 10px;
-    font-family: 'Space Mono', monospace;
-    color: var(--network);
-  }
-
-  pre {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px 16px;
-    overflow-x: auto;
-    margin: 10px 0 14px;
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    line-height: 1.7;
-    color: var(--linux);
-  }
-  pre code {
-    background: none; border: none; padding: 0;
-    font-size: inherit; color: inherit;
-  }
-
-  /* Callout boxes */
-  .callout {
-    border: 1px solid; border-radius: 4px;
-    padding: 12px 14px; margin: 12px 0 16px;
-    font-size: 11px; line-height: 1.65;
-    max-width: 760px;
-  }
-  .callout .label {
-    font-size: 9px; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    display: block; margin-bottom: 6px;
-  }
-  .callout.note  { background: rgba(91,155,213,0.06);  border-color: rgba(91,155,213,0.25); }
-  .callout.note  .label { color: var(--network); }
-  .callout.warn  { background: rgba(240,192,64,0.06);  border-color: rgba(240,192,64,0.25); }
-  .callout.warn  .label { color: var(--accent); }
-
-  /* Steps */
-  .steps { margin: 12px 0; max-width: 760px; }
-  .step {
-    display: grid; grid-template-columns: 28px 1fr;
-    gap: 10px; margin-bottom: 14px; align-items: start;
-  }
-  .step-num {
-    font-size: 9px; font-weight: 700;
-    color: var(--bg); background: var(--network);
-    width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin-top: 2px; flex-shrink: 0;
-    font-family: 'Space Mono', monospace;
-  }
-  .step-body { font-size: 11px; line-height: 1.65; color: var(--text); }
-  .step-body strong { display: block; margin-bottom: 4px; color: var(--linux); }
-
-  /* Env var grid */
-  .env-vars {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 4px; padding: 10px 14px; margin: 8px 0;
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
-    gap: 4px 16px;
-  }
-  .env-vars span { font-size: 10px; color: var(--linux); }
-  .env-vars span.hi { color: var(--danger); font-weight: 700; }
-
-  /* Summary table */
-  table { width: 100%; max-width: 760px; border-collapse: collapse; margin: 12px 0; font-size: 10px; }
-  th {
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 6px 10px; text-align: left; font-weight: 700;
-    color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase;
-  }
-  td { border: 1px solid var(--border); padding: 6px 10px; vertical-align: top; }
-  td:first-child { color: var(--danger); }
-  td:last-child { color: var(--safe); }
-  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
-
-  /* Footer */
-  .page-footer {
-    margin-top: 48px; padding-top: 12px;
-    border-top: 1px solid var(--border);
-    font-size: 10px; color: var(--text-faint);
-    display: flex; gap: 12px; flex-wrap: wrap;
-  }
-  .page-footer a { color: var(--text-faint); text-decoration: none; }
-  .page-footer a:hover { color: var(--network); }
+/* ── Footer ── */
+.page-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.page-footer a { color: var(--text-muted); }
+.page-footer a:hover { color: var(--accent); }
 </style>
 </head>
 <body>
 
-<div class="breadcrumb">
-  <a href="/">cowork.exponential-systems.net</a> / independent-verification
-</div>
-
-<h1>Independent Verification of API Traffic</h1>
-<div class="subtitle">How to confirm your process is talking to the endpoint it thinks it is</div>
-<div class="meta">
-  Companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;&bull;&nbsp; 2026-04
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;/&nbsp; independent-verification
+  </div>
+  <h1>Independent Verification of API Traffic</h1>
+  <div class="subtitle">How to confirm your process is talking to the endpoint it thinks it is</div>
+  <div class="meta">
+    Companion to <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;·&nbsp; 2026-04
+  </div>
 </div>
 
 <h2>The Problem the Cowork Audit Established</h2>
 
-<p>The cowork architecture page documented that the service managing the Claude Desktop sandbox installs its own CA certificate inside the guest VM and performs full TLS interception on traffic to <code>*.anthropic.com</code>. Every API call from inside the VM is decrypted, inspectable, and re-encrypted before forwarding.</p>
+<p>The cowork architecture page documented that the service managing the Claude Desktop
+sandbox installs its own CA certificate inside the guest VM and performs full TLS
+interception on traffic to <code>*.anthropic.com</code>. Every API call from inside the VM is
+decrypted, inspectable, and re-encrypted before forwarding.</p>
 
 <p>This breaks HTTPS's security guarantee in a specific and important way.</p>
 
-<p>HTTPS does not encrypt traffic in an absolute sense. It encrypts traffic <strong>to a verified party</strong>. The verification step — confirming the server's certificate was signed by a trusted authority — is what prevents a man-in-the-middle from substituting their own endpoint. When an attacker installs their own CA into the trust store and uses it to issue certificates for the target domain, they become a trusted authority. The verification step passes. The attacker is in the middle.</p>
+<p>HTTPS does not encrypt traffic in an absolute sense. It encrypts traffic <strong>to a
+verified party</strong>. The verification step — confirming the server's certificate was
+signed by a trusted authority — is what prevents a man-in-the-middle from
+substituting their own endpoint. When an attacker installs their own CA into the
+trust store and uses it to issue certificates for the target domain, they become
+a trusted authority. The verification step passes. The attacker is in the middle.</p>
 
-<p>The question this page answers is: <strong>given that this interception is present, how can a process verify that it is communicating with the real endpoint?</strong></p>
+<p>The question this page answers is: <strong>given that this interception is present,
+how can a process verify that it is communicating with the real endpoint?</strong></p>
 
 <h2>Why Standard TLS Verification Fails Here</h2>
 
-<p>The normal TLS verification path consults the operating system's certificate trust store — or, in runtimes like Node.js, a bundled trust store that can be extended by environment variable. If the intercepting CA's certificate is present in either location, standard verification will succeed against the intercepted connection. The process has no way to distinguish the real endpoint from the proxy.</p>
+<p>The normal TLS verification path consults the operating system's certificate trust
+store — or, in runtimes like Node.js, a bundled trust store that can be extended
+by environment variable. If the intercepting CA's certificate is present in either
+location, standard verification will succeed against the intercepted connection.
+The process has no way to distinguish the real endpoint from the proxy.</p>
 
-<div class="callout note">
+<div class="note">
   <span class="label">Live Observation</span>
-  This exact behavior was confirmed when fetching the cowork page itself. The connection to <code>cowork.exponential-systems.net</code> was intercepted by <code>O=Anthropic; CN=sandbox-egress-production TLS Inspection CA</code>, yet the TLS library reported <code>SSL certificate verify ok</code>. The page documenting the interception was itself being intercepted.
+  This exact behavior was confirmed when fetching the cowork page itself. The
+  connection to <code>cowork.exponential-systems.net</code> was intercepted by
+  <code>O=Anthropic; CN=sandbox-egress-production TLS Inspection CA</code>, yet
+  the TLS library reported <code>SSL certificate verify ok</code>. The page
+  documenting the interception was itself being intercepted.
 </div>
 
-<p>The interception is not a bug. It is the intended behavior of a CA-based trust model when the CA is controlled by a party in the network path.</p>
+<p>The interception is not a bug in the proxy's implementation. It is the intended
+behavior of a CA-based trust model when the CA is controlled by a party in the
+network path.</p>
 
 <h2>The Countermeasure: Certificate Pinning Against a Live-Fetched Fingerprint</h2>
 
-<p>Certificate pinning replaces the CA-based trust question ("was this cert signed by a trusted authority?") with an identity question ("does this cert match the specific cert I expect?"). A pinned fingerprint is a SHA-256 hash of the certificate's raw bytes. An attacker who substitutes a different certificate — even one signed by a CA in the trust store — produces a different hash.</p>
+<p>Certificate pinning replaces the CA-based trust question ("was this cert signed by
+a trusted authority?") with an identity question ("does this cert match the specific
+cert I expect?"). A pinned fingerprint is a SHA-256 hash of the certificate's raw
+bytes. An attacker who substitutes a different certificate — even one signed by a
+CA in the trust store — produces a different hash. The substitution is detectable.</p>
 
 <div class="steps">
 
@@ -238,7 +228,12 @@
   <div class="step-num">1</div>
   <div class="step-body">
     <strong>Establish the real fingerprint out-of-band.</strong>
-    Before any interception is possible, connect to the target endpoint from a clean network context and record the SHA-256 fingerprint of its leaf certificate. This must happen on a machine where the intercepting CA has not been installed. The fingerprint cannot be forged: no CA can sign a certificate that produces the same SHA-256 hash as the original without controlling the original's private key.
+    Before any interception is possible, connect to the target endpoint from a
+    clean network context and record the SHA-256 fingerprint of its leaf
+    certificate. This must happen on a machine or in a context where the
+    intercepting CA has not yet been installed. The fingerprint cannot be forged:
+    no CA can sign a certificate that produces the same SHA-256 hash as the
+    original without controlling the original's private key.
   </div>
 </div>
 
@@ -246,7 +241,12 @@
   <div class="step-num">2</div>
   <div class="step-body">
     <strong>Strip proxy and CA injection variables before the connection.</strong>
-    The following environment variables must be explicitly cleared. <span style="color:var(--danger);font-weight:700">HTTPS_PROXY</span> (redirects the entire connection) and <span style="color:var(--danger);font-weight:700">NODE_EXTRA_CA_CERTS</span> (silently extends the trust store at runtime) are the highest-impact, but the full set must be cleared:
+    A pinning check that routes through a proxy before establishing TLS verifies
+    the proxy's certificate, not the endpoint's. The following environment
+    variables must be explicitly cleared before any verification connection.
+    <strong style="color:var(--crit)">HTTPS_PROXY</strong> (redirects the entire connection) and
+    <strong style="color:var(--crit)">NODE_EXTRA_CA_CERTS</strong> (silently extends the trust
+    store at runtime) are the highest-impact, but the full set must be cleared:
     <div class="env-vars">
       <span class="hi">HTTPS_PROXY</span>
       <span class="hi">NODE_EXTRA_CA_CERTS</span>
@@ -260,7 +260,9 @@
       <span>SSL_CERT_DIR</span>
       <span>NODE_TLS_REJECT_UNAUTHORIZED</span>
     </div>
-    These variables are the software equivalent of the CA installation attack: they redirect or weaken TLS at the application layer. Stripping them must happen before the connection, not after.
+    These variables are the software equivalent of the CA installation attack:
+    they redirect or weaken TLS at the application layer. Stripping them must
+    happen before the connection, not after.
   </div>
 </div>
 
@@ -268,7 +270,10 @@
   <div class="step-num">3</div>
   <div class="step-body">
     <strong>Compare the live fingerprint against the pinned value.</strong>
-    Connect with proxy variables cleared. Extract the SHA-256 fingerprint of the leaf certificate and compare against the stored pin. A mismatch means either the endpoint's certificate has legitimately rotated (requiring a pin update) or an active interception is present.
+    Connect to the endpoint with proxy variables cleared. Extract the SHA-256
+    fingerprint of the leaf certificate returned. Compare against the stored pin.
+    A mismatch means either the endpoint's certificate has legitimately rotated
+    (requiring a pin update) or an active interception is present.
   </div>
 </div>
 
@@ -276,7 +281,11 @@
   <div class="step-num">4</div>
   <div class="step-body">
     <strong>Maintain a pin update process.</strong>
-    Real endpoints rotate their certificates on schedules measured in months. The update process itself must follow the same proxy-stripping procedure: fetch the new cert in a clean context, verify the domain, replace the stored pin.
+    Real endpoints rotate their certificates on schedules measured in months.
+    A pinning system that cannot update its pins eventually breaks legitimate
+    connections. The update process must follow the same proxy-stripping
+    procedure: fetch the new cert in a clean context, verify the domain, replace
+    the stored pin.
   </div>
 </div>
 
@@ -284,66 +293,105 @@
 
 <h2>The Node.js-Specific Bypass</h2>
 
-<p>In Node.js, the standard <code>https</code> module reads <code>HTTPS_PROXY</code> at module load time, not at connection time. An application that unsets <code>HTTPS_PROXY</code> at runtime may still route through the proxy if the module was already initialized with that variable set. Environment variable manipulation at runtime is not a reliable defense.</p>
+<p>In Node.js, the standard <code>https</code> module reads <code>HTTPS_PROXY</code> at module
+load time, not at connection time. An application that unsets <code>HTTPS_PROXY</code> at
+runtime and then calls <code>https.request()</code> may still route through the proxy if
+the module was already initialized with that variable set. Environment variable
+manipulation at runtime is not a reliable defense in runtimes with module-level
+initialization.</p>
 
-<p>The bypass is to avoid the <code>https</code> module entirely for sensitive connections and construct the TCP path manually:</p>
+<p>The bypass is to avoid the <code>https</code> module entirely for sensitive connections
+and construct the TCP path manually:</p>
 
-<pre>1.  net.createConnection(proxyHost, proxyPort)
+<pre><code>1.  net.createConnection(proxyHost, proxyPort)
     // open TCP to proxy (or directly to target if no proxy)
 
 2.  write: "CONNECT targetHost:443 HTTP/1.1\r\nHost: targetHost\r\n\r\n"
     // HTTP tunnel request
 
-3.  on 200 response: tls.connect({ socket, servername: targetHost })
-    // TLS handshake over the raw socket — no proxy env var handling
+3.  on 200 response: tls.connect({ socket, servername: targetHost, ... })
+    // TLS handshake over the raw socket
 
-4.  tls.getPeerCertificate() → SHA-256 fingerprint → compare to pin</pre>
+4.  extract certificate fingerprint from tls.getPeerCertificate()
+    // compare SHA-256 against stored pin</code></pre>
 
-<p>This gives the application direct control over every step. No environment variable at any layer can redirect it. The same approach is necessary when <code>NODE_EXTRA_CA_CERTS</code> may have been injected: by specifying a <code>ca</code> option explicitly, the application trusts only what it names.</p>
+<p>This path gives the application direct control over every step of the connection.
+No environment variable at any layer can redirect it. The TLS handshake occurs
+directly against the target endpoint, and the resulting certificate is the one
+to pin against.</p>
+
+<p>The same approach is necessary even in non-proxy scenarios when
+<code>NODE_EXTRA_CA_CERTS</code> may have been injected: by constructing the TLS context
+explicitly with a specific <code>ca</code> option, the application trusts only the CAs
+it names rather than inheriting whatever the environment has added.</p>
 
 <h2>The Spawn Contract: Env Inheritance as Attack Surface</h2>
 
-<p>The cowork audit documented that the sandbox management process is spawned with the full parent process environment. Every child process spawned with <code>{...process.env}</code> or equivalent inherits all proxy variables and CA injection variables the parent acquired — regardless of whether the child's own code is otherwise clean.</p>
+<p>The cowork audit documented that the sandbox management process is spawned with
+the full parent process environment. Every child process spawned with
+<code>{...process.env}</code> or equivalent inherits all proxy variables and CA injection
+variables the parent acquired — regardless of whether the child's own code is
+otherwise clean.</p>
 
-<p>The correct spawn contract for any process that must maintain a clean network context is explicit environment construction:</p>
+<p>The correct spawn contract for any process that must maintain a clean network
+context is explicit environment construction:</p>
 
-<pre>// Only enumerate what the child requires.
+<pre><code>// Only enumerate what the child requires.
 // Proxy and CA injection variables are absent by construction.
 const childEnv = {
   PATH: process.env.PATH,
   HOME: process.env.HOME,
-  // ... only what the child specifically needs
+  // ... additional variables the child specifically needs
 };
 
 const child = spawn(command, args, {
   env:   childEnv,
-  stdio: ['ignore', 'pipe', 'pipe'],
-});</pre>
+  stdio: ['ignore', 'pipe', 'pipe'],  // see next section
+});</code></pre>
 
-<p><strong>Absence is the safe default.</strong> Any variable not explicitly granted to the child is not present. The parent cannot accidentally propagate an injected proxy variable it is not itself aware of.</p>
+<p><strong>Absence is the safe default.</strong> Any variable not explicitly granted to the
+child is not present. The parent cannot accidentally propagate an injected
+proxy variable it is not aware of.</p>
 
 <h2>The Accountability Gap: stdio and Process Lifecycle</h2>
 
-<p>The cowork audit documented that the sandbox management process is spawned with <code>stdio: 'ignore'</code> and immediately <code>unref()</code>'d.</p>
+<p>The cowork audit documented that the sandbox management process is spawned with
+<code>stdio: 'ignore'</code> and immediately <code>unref()</code>'d. Both choices have security
+implications beyond their operational convenience.</p>
 
-<p><code>stdio: 'ignore'</code> means the parent has no channel to observe what the child writes. A child that logs credentials, exfiltrates data, or signals errors does so invisibly.</p>
+<p><code>stdio: 'ignore'</code> means the parent process has no channel to observe what the
+child writes. A child that logs credentials, exfiltrates data, or signals errors
+does so invisibly. The parent cannot distinguish a child that is functioning
+correctly from one that is not.</p>
 
-<p><code>unref()</code> means the child's lifecycle is decoupled from the parent's. A child that crashes, restarts, or continues running after the parent exits does so without the parent's knowledge.</p>
+<p><code>unref()</code> means the parent's event loop does not wait for the child. A child
+that crashes, restarts, or continues running after the parent exits does so
+without the parent's knowledge or control.</p>
 
-<pre>// Piped stdio — parent can observe child output
-child.stdout.on('data', d => log('[child:out]', d.toString().trim()));
+<p>The alternative is a ref'd child with piped stdio:</p>
+
+<pre><code>child.stdout.on('data', d => log('[child:out]', d.toString().trim()));
 child.stderr.on('data', d => log('[child:err]', d.toString().trim()));
 child.on('exit', (code, signal) => {
   log('[child] exited', code, signal);
-  // restart policy, parent alert, or clean shutdown here
+  // implement restart policy, parent alert, or clean shutdown here
 });
 
 // Tie child lifecycle to parent lifecycle
-app.on('before-quit', () => child.kill('SIGTERM'));</pre>
+process.on('exit', () => child.kill('SIGTERM'));
+app.on('before-quit', () => child.kill('SIGTERM'));</code></pre>
+
+<p>This pattern makes the child's behavior visible and ties its lifecycle to the
+parent's. A child that is doing something unexpected surfaces it through the
+accountability channel rather than into a void.</p>
 
 <h2>Summary</h2>
 
-<p>None of these countermeasures require trusting any particular tooling or infrastructure. Each can be implemented from scratch using standard library primitives.</p>
+<p>The cowork audit documents an interception architecture that operates at the CA
+trust layer. Standard TLS verification cannot detect it because standard
+verification trusts the installed CA. None of the following countermeasures
+require trusting any particular tooling or infrastructure. Each can be implemented
+from scratch using standard library primitives.</p>
 
 <table>
 <thead>
@@ -358,11 +406,11 @@ app.on('before-quit', () => child.kill('SIGTERM'));</pre>
   <td>Pin the real endpoint's leaf certificate SHA-256 fingerprint</td>
 </tr>
 <tr>
-  <td>Proxy env vars redirect the connection</td>
+  <td>Proxy env vars redirect the connection before TLS</td>
   <td>Explicitly clear all proxy and CA injection env vars before connecting</td>
 </tr>
 <tr>
-  <td>Node.js <code>https</code> module reads env at init</td>
+  <td>Node.js <code>https</code> module reads env at init time</td>
   <td>Bypass via raw <code>net.createConnection</code> → <code>CONNECT</code> → <code>tls.connect</code></td>
 </tr>
 <tr>
@@ -376,18 +424,19 @@ app.on('before-quit', () => child.kill('SIGTERM'));</pre>
 </tbody>
 </table>
 
-<div class="callout warn">
+<div class="note">
   <span class="label">Implementation Note</span>
-  The verification described here is local and self-contained. It does not depend on a third party, a certificate transparency log, or any external service to tell you whether the connection is clean. The fingerprint comparison happens in your process, against a value you established independently.
+  The verification approach described here is local and self-contained. It does
+  not depend on a third party, a certificate transparency log, or any external
+  service to tell you whether the connection is clean. The fingerprint comparison
+  happens in your process, against a value you established independently.
 </div>
 
 <div class="page-footer">
-  <a href="/">cowork.exponential-systems.net</a>
-  <span>&bull;</span>
-  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
-  <span>&bull;</span>
+  <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+  <span>·</span>
   <span>independent-verification</span>
-  <span>&bull;</span>
+  <span>·</span>
   <span>2026</span>
 </div>
 
