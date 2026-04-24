@@ -5,979 +5,724 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Desktop — Cowork Sandbox Architecture</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:         #0a0c0f;
-    --surface:    #111418;
-    --border:     #1e2530;
-    --border-hi:  #2d3a4a;
-    --text:       #c8d4e0;
-    --text-dim:   #5a6a7a;
-    --text-faint: #2e3d4d;
-    --win:        #e8a838;
-    --linux:      #4ec9b0;
-    --network:    #5b9bd5;
-    --danger:     #f05060;
-    --safe:       #4aba72;
-    --pipe:       #9b72cf;
-    --accent:     #f0c040;
-    --glow-win:   rgba(232,168,56,0.15);
-    --glow-linux: rgba(78,201,176,0.15);
-    --glow-net:   rgba(91,155,213,0.12);
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    min-height: 100vh;
-    padding: 32px 24px;
-  }
-
-  h1 {
-    font-family: 'Courier Prime', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    margin-bottom: 36px;
-  }
-
-  .diagram {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    max-width: 1100px;
-  }
-
-  /* === LAYERS === */
-  .layer {
-    display: flex;
-    align-items: stretch;
-    gap: 12px;
-    position: relative;
-  }
-
-  .layer-label {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    white-space: nowrap;
-    width: 18px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 0;
-  }
-
-  .layer-content {
-    flex: 1;
-    display: flex;
-    gap: 12px;
-    align-items: stretch;
-    padding: 16px;
-    border-radius: 4px;
-    position: relative;
-  }
-
-  .layer-win   { background: rgba(232,168,56,0.04); border: 1px solid rgba(232,168,56,0.18); }
-  .layer-linux { background: rgba(78,201,176,0.04); border: 1px solid rgba(78,201,176,0.18); }
-  .layer-net   { background: rgba(91,155,213,0.04); border: 1px solid rgba(91,155,213,0.18); }
-
-  .layer-win   .layer-label { color: rgba(232,168,56,0.4); }
-  .layer-linux .layer-label { color: rgba(78,201,176,0.4); }
-  .layer-net   .layer-label { color: rgba(91,155,213,0.4); }
-
-  /* === BOXES === */
-  .box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 12px 14px;
-    flex: 1;
-    min-width: 0;
-    position: relative;
-    transition: border-color 0.2s;
-  }
-
-  .box:hover { border-color: var(--border-hi); }
-
-  .box-title {
-    font-family: 'Courier Prime', monospace;
-    font-weight: 700;
-    font-size: 12px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .box-title .tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 9px;
-    font-weight: 400;
-    padding: 1px 5px;
-    border-radius: 2px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .tag-win   { background: rgba(232,168,56,0.15); color: var(--win); border: 1px solid rgba(232,168,56,0.3); }
-  .tag-linux { background: rgba(78,201,176,0.15); color: var(--linux); border: 1px solid rgba(78,201,176,0.3); }
-  .tag-sys   { background: rgba(240,80,96,0.15);  color: var(--danger); border: 1px solid rgba(240,80,96,0.3); }
-  .tag-safe  { background: rgba(74,186,114,0.15); color: var(--safe); border: 1px solid rgba(74,186,114,0.3); }
-  .tag-open  { background: rgba(155,114,207,0.15); color: var(--pipe); border: 1px solid rgba(155,114,207,0.3); }
-
-  .item {
-    font-size: 11px;
-    color: var(--text-dim);
-    padding: 2px 0;
-    padding-left: 10px;
-    position: relative;
-  }
-
-  .item::before {
-    content: '–';
-    position: absolute;
-    left: 0;
-    color: var(--text-faint);
-  }
-
-  .item.highlight { color: var(--text); }
-  .item.warn { color: var(--danger); }
-  .item.ok   { color: var(--safe); }
-  .item.note { color: var(--pipe); }
-
-  /* === ARROWS / CONNECTORS === */
-  .connector-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 0 34px;
-    margin: -1px 0;
-    position: relative;
-    z-index: 2;
-  }
-
-  .arrow-col {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .arrow-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
-  }
-
-  .arrow-label {
-    font-size: 10px;
-    color: var(--text-faint);
-    white-space: nowrap;
-    padding: 4px 8px;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    background: var(--bg);
-    letter-spacing: 0.05em;
-  }
-
-  .arrow-label.down {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .arrow-label.auth   { border-color: rgba(232,168,56,0.3); color: var(--win); }
-  .arrow-label.open   { border-color: rgba(155,114,207,0.3); color: var(--pipe); }
-  .arrow-label.mitm   { border-color: rgba(240,80,96,0.3); color: var(--danger); }
-  .arrow-label.virtiofs { border-color: rgba(78,201,176,0.3); color: var(--linux); }
-  .arrow-label.net    { border-color: rgba(91,155,213,0.3); color: var(--network); }
-
-  /* vertical connectors */
-  .vconn {
-    display: flex;
-    padding: 0 34px;
-    gap: 12px;
-  }
-
-  .vconn-spacer { width: 18px; flex-shrink: 0; }
-
-  .vconn-content {
-    flex: 1;
-    display: flex;
-    gap: 12px;
-  }
-
-  .vcol {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-
-  .vline {
-    width: 1px;
-    height: 24px;
-    background: linear-gradient(180deg, transparent, var(--border-hi), transparent);
-    position: relative;
-  }
-
-  .vline::after {
-    content: '▼';
-    position: absolute;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    color: var(--border-hi);
-  }
-
-  .vline.auth::after    { color: var(--win); }
-  .vline.open::after    { color: var(--pipe); }
-  .vline.virtiofs::after { color: var(--linux); }
-
-  /* === FINDINGS PANEL === */
-  .findings {
-    margin-top: 32px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-
-  .finding-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 14px;
-  }
-
-  .finding-card.critical { border-color: rgba(240,80,96,0.4); background: rgba(240,80,96,0.04); }
-  .finding-card.notable  { border-color: rgba(155,114,207,0.4); background: rgba(155,114,207,0.04); }
-  .finding-card.neutral  { border-color: rgba(78,201,176,0.3); background: rgba(78,201,176,0.03); }
-
-  .finding-title {
-    font-family: 'Courier Prime', monospace;
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 8px;
-  }
-
-  .finding-card.critical .finding-title { color: var(--danger); }
-  .finding-card.notable  .finding-title { color: var(--pipe); }
-  .finding-card.neutral  .finding-title { color: var(--linux); }
-
-  .finding-body {
-    font-size: 10.5px;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .finding-body code {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--text);
-    background: rgba(255,255,255,0.05);
-    padding: 1px 4px;
-    border-radius: 2px;
-  }
-
-  /* === DATA FLOW === */
-  .flow-section {
-    margin-top: 32px;
-  }
-
-  .flow-title {
-    font-family: 'Courier Prime', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--text-dim);
-    margin-bottom: 16px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .flow {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 2px;
-  }
-
-  .flow-node {
-    padding: 5px 10px;
-    border-radius: 2px;
-    font-size: 10px;
-    white-space: nowrap;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-dim);
-  }
-
-  .flow-node.win   { border-color: rgba(232,168,56,0.3); color: var(--win); background: rgba(232,168,56,0.06); }
-  .flow-node.linux { border-color: rgba(78,201,176,0.3); color: var(--linux); background: rgba(78,201,176,0.06); }
-  .flow-node.net   { border-color: rgba(91,155,213,0.3); color: var(--network); background: rgba(91,155,213,0.06); }
-  .flow-node.red   { border-color: rgba(240,80,96,0.3); color: var(--danger); background: rgba(240,80,96,0.06); }
-  .flow-node.purple { border-color: rgba(155,114,207,0.3); color: var(--pipe); background: rgba(155,114,207,0.06); }
-
-  .flow-arrow {
-    font-size: 10px;
-    color: var(--text-faint);
-    padding: 0 2px;
-  }
-
-  .flow-note {
-    font-size: 9px;
-    color: var(--text-faint);
-    margin-left: 8px;
-    font-style: italic;
-  }
-
-  /* blink animation for MITM */
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-  .mitm-badge {
-    animation: pulse 2s infinite;
-    display: inline-block;
-  }
-
-  .box-win   { box-shadow: inset 0 0 0 1px rgba(232,168,56,0.08); }
-  .box-linux { box-shadow: inset 0 0 0 1px rgba(78,201,176,0.08); }
-
-  .disabled-notice {
-    font-size: 10px;
-    color: var(--danger);
-    padding: 4px 8px;
-    border: 1px dashed rgba(240,80,96,0.4);
-    border-radius: 2px;
-    margin-top: 8px;
-    letter-spacing: 0.05em;
-  }
-
-  /* ===== RESPONSIVE ===== */
-
-  /* Tablet: 2-col findings, minor tightening */
-  @media (max-width: 900px) {
-    body { padding: 20px 16px; }
-
-    .findings {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .diagram { max-width: 100%; }
-    .flow-section, .findings { max-width: 100%; }
-  }
-
-  /* Mobile: full single-column layout */
-  @media (max-width: 640px) {
-    body {
-      padding: 16px 12px;
-      font-size: 11px;
-    }
-
-    h1 { font-size: 13px; letter-spacing: 0.12em; }
-    .subtitle { font-size: 10px; margin-bottom: 20px; }
-
-    /* Layers: stack label above content, not sideways */
-    .layer {
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .layer-label {
-      writing-mode: horizontal-tb;
-      transform: none;
-      width: auto;
-      font-size: 9px;
-      padding: 4px 8px;
-      text-align: left;
-      justify-content: flex-start;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .layer-win   .layer-label { border-bottom-color: rgba(232,168,56,0.3); }
-    .layer-linux .layer-label { border-bottom-color: rgba(78,201,176,0.3); }
-    .layer-net   .layer-label { border-bottom-color: rgba(91,155,213,0.3); }
-
-    /* Layer content: stack boxes vertically */
-    .layer-content {
-      flex-direction: column;
-      padding: 10px;
-      gap: 10px;
-    }
-
-    /* Override any inline flex values on boxes */
-    .box, .layer-content .box {
-      flex: none !important;
-      width: 100%;
-      min-width: 0;
-    }
-
-    /* Connector rows: stack labels vertically */
-    .connector-row {
-      flex-direction: column;
-      padding: 4px 12px;
-      gap: 4px;
-      align-items: stretch;
-    }
-
-    .arrow-col {
-      justify-content: flex-start;
-    }
-
-    .arrow-line { display: none; }
-
-    .arrow-label {
-      font-size: 9px;
-      white-space: normal;
-      word-break: break-word;
-    }
-
-    /* Vertical connectors: shorter, fewer columns on mobile */
-    .vconn {
-      padding: 0 12px;
-    }
-
-    .vconn-spacer { width: 0; }
-
-    .vline { height: 14px; }
-
-    /* Flow traces: always wrap, bigger text  */
-    .flow {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 3px;
-      margin-bottom: 12px;
-    }
-
-    .flow-node {
-      font-size: 9px;
-      padding: 4px 7px;
-      white-space: normal;
-      word-break: break-word;
-    }
-
-    .flow-arrow { font-size: 9px; }
-
-    .flow-note {
-      width: 100%;
-      margin-left: 0;
-      margin-top: 2px;
-    }
-
-    /* Findings: single column */
-    .findings {
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .finding-body { font-size: 10px; }
-
-    /* Box titles: allow wrapping */
-    .box-title {
-      flex-wrap: wrap;
-      font-size: 11px;
-    }
-
-    .item { font-size: 10px; }
-
-    /* Footer */
-    div[style*="font-size:10px"] {
-      font-size: 9px !important;
-      word-break: break-word;
-    }
-  }
-
-  /* Very small phones */
-  @media (max-width: 380px) {
-    body { padding: 12px 10px; }
-    .layer-content { padding: 8px; }
-    .box { padding: 10px; }
-  }
-
-  /* Amendment cards - 2026-04 additions */
-  .amendment-card {
-    border: 1px solid rgba(91,155,213,0.3);
-    background: rgba(91,155,213,0.04);
-    border-radius: 4px;
-    padding: 14px 16px;
-    margin: 8px 0 0 0;
-    font-size: 11px;
-    line-height: 1.65;
-  }
-  .amendment-title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--network);
-    margin-bottom: 6px;
-  }
-  .amendment-card p { margin-bottom: 8px; color: var(--text); }
-  .amendment-card p:last-child { margin-bottom: 0; }
-  .amendment-card code {
-    background: rgba(91,155,213,0.1);
-    border: 1px solid rgba(91,155,213,0.2);
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 10px;
-    color: var(--network);
-  }
-  .structural-finding {
-    background: rgba(240,80,96,0.06);
-    border: 1px solid rgba(240,80,96,0.25);
-    border-radius: 3px;
-    padding: 10px 14px;
-    margin-top: 8px;
-    font-size: 10px;
-    color: var(--text);
-  }
-  .structural-finding .sf-label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--danger);
-    display: block;
-    margin-bottom: 5px;
-  }
-  .capability-section {
-    max-width: 1100px;
-    margin-top: 28px;
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
-  }
-  .capability-section h2 {
-    font-family: 'Courier Prime', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 12px;
-  }
-  .capability-section p {
-    font-size: 11px;
-    line-height: 1.65;
-    color: var(--text);
-    margin-bottom: 10px;
-    max-width: 800px;
-  }
+:root {
+  --bg:         #0d1117;
+  --bg-card:    #161b22;
+  --bg-code:    #1c2128;
+  --bg-note:    #111820;
+  --bg-warn:    #1a1200;
+  --bg-crit:    #1a0d0d;
+  --border:     #30363d;
+  --border-note:#1f4068;
+  --border-warn:#6e4c00;
+  --border-crit:#8b2020;
+  --text:       #e6edf3;
+  --text-muted: #8b949e;
+  --text-code:  #aff3c8;
+  --accent:     #58a6ff;
+  --warn:       #d29922;
+  --crit:       #f85149;
+  --green:      #3fb950;
+  --mono: 'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1.75;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+.page-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.3rem; }
+.subtitle { font-size: 0.8rem; color: var(--text-muted); }
+h2 {
+  font-size: 1rem; font-weight: 700;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.01em;
+}
+h3 { font-size: 0.9rem; font-weight: 700; color: var(--accent); margin: 1.5rem 0 0.6rem; }
+p { margin-bottom: 0.85rem; }
+p:last-child { margin-bottom: 0; }
+strong { font-weight: 700; }
+ul, ol { margin: 0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom: 0.3rem; font-size: 0.9rem; }
+
+/* ── Architecture diagram ── */
+.arch-diagram {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.arch-column { display: flex; flex-direction: column; gap: 0.75rem; }
+.arch-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+.arch-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  font-size: 0.8rem;
+}
+.arch-box .box-title {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+.arch-box .box-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.1rem;
+}
+.arch-box .box-warn { color: var(--warn); font-size: 0.78rem; margin-top: 0.5rem; }
+.arch-box .box-crit { color: var(--crit); font-size: 0.78rem; margin-top: 0.5rem; }
+.arch-box .prop { color: var(--text-muted); font-size: 0.78rem; }
+.arch-box .method-list {
+  font-size: 0.75rem; color: var(--text-muted);
+  margin-top: 0.5rem; line-height: 1.6;
+}
+.arch-box .method-list .open { color: var(--crit); font-weight: 700; }
+.arch-box code { font-size: 0.78em; }
+
+/* ── Data flow ── */
+.flow-section { margin: 1.5rem 0; }
+.flow {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+}
+.flow .flow-title {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.flow .flow-note { color: var(--crit); font-size: 0.78rem; margin-top: 0.4rem; }
+.flow .flow-warn { color: var(--warn); font-size: 0.78rem; margin-top: 0.4rem; }
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.2rem 0;
+  color: var(--text-muted);
+}
+.flow-step .arr { color: var(--text-muted); flex-shrink: 0; }
+.flow-step .txt { color: var(--text); }
+.flow-step .note { color: var(--text-muted); font-size: 0.78rem; }
+
+/* ── Finding blocks ── */
+.finding {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--crit);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+.finding h3 { margin-top: 0; color: var(--crit); }
+.finding p { font-size: 0.875rem; }
+
+/* ── Callout boxes ── */
+.note-box {
+  background: var(--bg-note);
+  border: 1px solid var(--border-note);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.2rem;
+  font-size: 0.875rem;
+}
+.note-box .label {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--accent);
+  text-transform: uppercase; display: block; margin-bottom: 0.3rem;
+}
+.warn-box {
+  background: var(--bg-warn);
+  border: 1px solid var(--border-warn);
+  border-left: 3px solid var(--warn);
+  border-radius: 4px;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.2rem;
+  font-size: 0.875rem;
+}
+.warn-box .label {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--warn);
+  text-transform: uppercase; display: block; margin-bottom: 0.3rem;
+}
+
+/* ── Amendment callout ── */
+.amendment {
+  background: rgba(88,166,255,0.04);
+  border: 1px solid rgba(88,166,255,0.18);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.9rem 1.2rem;
+  margin: 1.1rem 0;
+  font-size: 0.875rem;
+}
+.amendment .amend-title {
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--accent); margin-bottom: 0.55rem;
+}
+
+/* ── Code ── */
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+  color: var(--text-code);
+}
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 0.8rem 0 1rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--text-code);
+}
+pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.83rem; }
+th {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem; text-align: left; font-weight: 700;
+  color: var(--text-muted); font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; vertical-align: top; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+/* ── Sources ── */
+.sources { margin-top: 2.5rem; font-size: 0.8rem; color: var(--text-muted); }
+.sources a { color: var(--text-muted); }
+.sources a:hover { color: var(--accent); }
+
+/* ── Footer ── */
+.page-footer {
+  margin-top: 3.5rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--text-muted);
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+}
+.page-footer a { color: var(--text-muted); }
+.page-footer a:hover { color: var(--accent); }
+
+@media (max-width: 700px) {
+  .arch-diagram { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
-<h1>Claude Desktop &mdash; Cowork Sandbox Architecture</h1>
-<p class="subtitle">Reconstructed from binary analysis, pipe interrogation, asar extraction &bull; 2026-02-19</p>
-
-<div class="diagram">
-
-  <!-- ====================== WINDOWS HOST LAYER ====================== -->
-  <div class="layer layer-win">
-    <div class="layer-label">Windows Host</div>
-    <div class="layer-content">
-
-      <div class="box box-win">
-        <div class="box-title">
-          claude.exe (Electron/Chromium)
-          <span class="tag tag-win">Win32</span>
-          <span class="tag tag-sys">SYSTEM cert</span>
-        </div>
-        <div class="item highlight">Signed: Anthropic, PBC</div>
-        <div class="item highlight">Thumbprint: dbde5d16768ed0c1...</div>
-        <div class="item">Renderer process (Claude UI)</div>
-        <div class="item">IPC &rarr; main process &rarr; cowork-svc pipe</div>
-        <div class="item">Client certificate embedded in binary</div>
-        <div class="item note">Only binary that can authenticate to cowork-svc</div>
-      </div>
-
-      <div class="box box-win">
-        <div class="box-title">
-          cowork-svc.exe (Windows Service)
-          <span class="tag tag-win">Go binary</span>
-          <span class="tag tag-sys">SYSTEM</span>
-        </div>
-        <div class="item highlight">Named pipe: <code>\\.\pipe\cowork-vm-service</code></div>
-        <div class="item highlight">Transport: uint32-BE length + JSON</div>
-        <div class="item warn">Auth: mutual TLS cert verification on ALL methods</div>
-        <div class="item ok">EXCEPT: <code>subscribeEvents</code> &mdash; open to any caller</div>
-        <div class="item">Methods: configure, createVM, startVM, stopVM,</div>
-        <div class="item">&nbsp;&nbsp;isRunning, isGuestConnected, spawn, kill,</div>
-        <div class="item">&nbsp;&nbsp;writeStdin, isProcessRunning, mountPath,</div>
-        <div class="item">&nbsp;&nbsp;readFile, installSdk, addApprovedOauthToken,</div>
-        <div class="item">&nbsp;&nbsp;setDebugLogging, subscribeEvents</div>
-        <div class="item">Persistent: survives MCP restarts, Claude sessions</div>
-        <div class="disabled-notice">! VM support DISABLED on this machine (win32/x64)</div>
-      </div>
-
-      <div class="box box-win" style="flex: 0.5">
-        <div class="box-title">
-          Bundle Assets
-          <span class="tag tag-win">Resources</span>
-        </div>
-        <div class="item highlight"><code>smol-bin.x64.vhdx</code> &mdash; 36 MB</div>
-        <div class="item highlight"><code>default.clod</code> &mdash; 96 KB</div>
-        <div class="item note">Contains: sandbox-helper, sdk-daemon</div>
-        <div class="item">Linux ELF64 binaries for guest</div>
-        <div class="item">Also loose on C:\Users\sethi\:</div>
-        <div class="item">&nbsp;&nbsp;sandbox-helper (2 MB)</div>
-        <div class="item">&nbsp;&nbsp;sdk-daemon (7.7 MB)</div>
-        <div class="item">sdk-daemon sha256: e232357e...</div>
-        <div class="item">sandbox-helper sha256: 8c6c5a22...</div>
-      </div>
-
-    </div>
+<div class="page-header">
+  <h1>Claude Desktop — Cowork Sandbox Architecture</h1>
+  <div class="subtitle">
+    Reconstructed from binary analysis, pipe interrogation, asar extraction
+    &nbsp;·&nbsp; 2026-02-19
   </div>
+</div>
 
-  <!-- ====================== CONNECTOR: Win -> VM ====================== -->
-  <div class="vconn">
-    <div class="vconn-spacer"></div>
-    <div class="vconn-content">
-      <div class="vcol">
-        <div class="vline auth"></div>
+<div class="arch-diagram">
+
+  <div class="arch-column">
+    <div class="arch-label">Windows Host</div>
+
+    <div class="arch-box">
+      <div class="box-title">claude.exe (Electron/Chromium)</div>
+      <span class="box-tag">Win32</span>
+      <span class="box-tag">SYSTEM cert</span>
+      <div class="prop">Signed: Anthropic, PBC</div>
+      <div class="prop">Thumbprint: dbde5d16768ed0c1&hellip;</div>
+      <div style="margin-top:0.6rem;font-size:0.78rem;color:var(--text-muted)">
+        Renderer process (Claude UI)<br>
+        IPC &rarr; main process &rarr; cowork-svc pipe<br>
+        Client certificate embedded in binary<br>
+        Only binary that can authenticate to cowork-svc
       </div>
-      <div class="vcol">
-        <div class="vline virtiofs"></div>
+    </div>
+
+    <div class="arch-box">
+      <div class="box-title">cowork-svc.exe (Windows Service)</div>
+      <span class="box-tag">Go binary</span>
+      <span class="box-tag">SYSTEM</span>
+      <div class="prop" style="margin-top:0.4rem">Named pipe: <code>\\.\pipe\cowork-vm-service</code></div>
+      <div class="prop">Transport: uint32-BE length + JSON</div>
+      <div class="prop">Auth: mutual TLS cert verification on ALL methods</div>
+      <div class="prop box-crit">EXCEPT: <code>subscribeEvents</code> — open to any caller</div>
+      <div class="method-list">
+        Methods: configure, createVM, startVM, stopVM,<br>
+        isRunning, isGuestConnected, spawn, kill,<br>
+        writeStdin, isProcessRunning, mountPath,<br>
+        readFile, installSdk, addApprovedOauthToken,<br>
+        setDebugLogging, <span class="open">subscribeEvents</span>
       </div>
-      <div class="vcol">
-        <div class="vline open"></div>
+      <div class="prop" style="margin-top:0.5rem">Persistent: survives MCP restarts, Claude sessions</div>
+      <div class="box-warn">! VM support DISABLED on this machine (win32/x64)</div>
+    </div>
+
+    <div class="arch-box">
+      <div class="box-title">Bundle Assets</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">
+        <code>smol-bin.x64.vhdx</code> — 36 MB<br>
+        <code>default.clod</code> — 96 KB<br>
+        Contains: sandbox-helper, sdk-daemon<br>
+        Linux ELF64 binaries for guest
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem">
+        Also loose on C:\Users\sethi\:<br>
+        sandbox-helper (2 MB)<br>
+        sdk-daemon (7.7 MB)<br>
+        sdk-daemon sha256: e232357e&hellip;<br>
+        sandbox-helper sha256: 8c6c5a22&hellip;
       </div>
     </div>
   </div>
 
-  <div class="connector-row">
-    <div class="arrow-col"><div class="arrow-label auth">HCS/HCN API &rarr; Hyper-V</div></div>
-    <div class="arrow-col"><div class="arrow-label virtiofs">virtiofs / Plan9 mounts</div></div>
-    <div class="arrow-col"><div class="arrow-label open">subscribeEvents (open) &mdash; stdout/stderr/exit/network stream</div></div>
-  </div>
+  <div class="arch-column">
+    <div class="arch-label">Linux VM Guest</div>
 
-  <div class="vconn">
-    <div class="vconn-spacer"></div>
-    <div class="vconn-content">
-      <div class="vcol"><div class="vline virtiofs"></div></div>
-      <div class="vcol"><div class="vline virtiofs"></div></div>
-      <div class="vcol"><div class="vline open"></div></div>
+    <div class="arch-box">
+      <div class="box-title">Hyper-V VM (Linux)</div>
+      <span class="box-tag">rootfs.vhdx</span>
+      <div class="prop" style="margin-top:0.4rem">Boot: vmlinuz + initrd from claudevm.bundle</div>
+      <div class="prop"><code>/mnt/.virtiofs-root</code> &rarr; host share mount</div>
+      <div class="prop">virtiofs: host dirs &rarr; guest mountpoints</div>
+      <div class="prop">sharedCwdPath: project dir mounted read-write</div>
+      <div class="prop">additionalMounts: per-spawn host paths</div>
+      <div class="prop">Session disk: per-conversation overlay VHDX</div>
+      <div class="prop">User: created via useradd, uid/gid from host</div>
+    </div>
+
+    <div class="arch-box">
+      <div class="box-title">sdk-daemon</div>
+      <span class="box-tag">ELF64 / root</span>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem">
+        MITM proxy: <code>/var/run/mitm-proxy.sock</code><br>
+        TLS intercept: <code>*.anthropic.com</code><br>
+        CA cert: <code>/usr/local/share/ca-certificates/mitm-proxy-ca.crt</code><br>
+        Network allowlist enforced (srt-settings.json)<br>
+        GitHub: proxied but NOT TLS-stripped<br>
+        OAuth tokens: must be approved via <code>addApprovedOauthToken</code>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem">
+        [updater] detects file changes: old hash vs new hash<br>
+        coworkd: manages virtiofs mounts, user creation<br>
+        Event stream: stdout / stderr / exit / networkStatus / apiReachability<br>
+        Wire: goproxy (MITM library)
+      </div>
+    </div>
+
+    <div class="arch-box">
+      <div class="box-title">sandbox-helper</div>
+      <span class="box-tag">ELF64 / setuid</span>
+      <span class="box-tag">priv-drop</span>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem">
+        <code>sandbox-helper &lt;uid&gt; &lt;gid&gt; &lt;cmd&gt; [args&hellip;]</code><br>
+        Reads: <code>/etc/srt-settings.base.json</code><br>
+        setuid &rarr; setgid &rarr; exec(command)<br>
+        Pipe: stdout/stderr &rarr; sdk-daemon event stream<br>
+        Shell-escapes args (al.essio.dev/shellescape)<br>
+        BuildSrtCommand: assembles safe shell invocation<br>
+        Purpose: drop from root to user UID before exec
+      </div>
     </div>
   </div>
 
-  <!-- ====================== LINUX VM LAYER ====================== -->
-  <div class="layer layer-linux">
-    <div class="layer-label">Linux VM Guest</div>
-    <div class="layer-content">
+  <div class="arch-column">
+    <div class="arch-label">Internet</div>
 
-      <div class="box box-linux">
-        <div class="box-title">
-          Hyper-V VM (Linux)
-          <span class="tag tag-linux">rootfs.vhdx</span>
-        </div>
-        <div class="item highlight">Boot: vmlinuz + initrd from claudevm.bundle</div>
-        <div class="item highlight"><code>/mnt/.virtiofs-root</code> &rarr; host share mount</div>
-        <div class="item">virtiofs: host dirs &rarr; guest mountpoints</div>
-        <div class="item">sharedCwdPath: project dir mounted read-write</div>
-        <div class="item">additionalMounts: per-spawn host paths</div>
-        <div class="item">Session disk: per-conversation overlay VHDX</div>
-        <div class="item">User: created via useradd, uid/gid from host</div>
+    <div class="arch-box">
+      <div class="box-title">Package Registries</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+        registry.npmjs.org<br>
+        pypi.org / pythonhosted.org<br>
+        crates.io / yarnpkg.com<br>
+        archive/security.ubuntu.com<br>
+        <br>
+        Proxied, not TLS-stripped<br>
+        GitHub OAuth tokens need approval
       </div>
+    </div>
 
-      <div class="box box-linux">
-        <div class="box-title">
-          sdk-daemon
-          <span class="tag tag-linux">ELF64 / root</span>
-        </div>
-        <div class="item highlight">MITM proxy: <code>/var/run/mitm-proxy.sock</code></div>
-        <div class="item highlight warn">TLS intercept: <span class="mitm-badge">*.anthropic.com</span></div>
-        <div class="item">CA cert: <code>/usr/local/share/ca-certificates/mitm-proxy-ca.crt</code></div>
-        <div class="item">Network allowlist enforced (srt-settings.json)</div>
-        <div class="item note">GitHub: proxied but NOT TLS-stripped</div>
-        <div class="item warn">OAuth tokens: must be approved via addApprovedOauthToken</div>
-        <div class="item">[updater] detects file changes: old hash vs new hash</div>
-        <div class="item">coworkd: manages virtiofs mounts, user creation</div>
-        <div class="item">Event stream: stdout / stderr / exit / networkStatus / apiReachability</div>
-        <div class="item">Wire: goproxy (MITM library)</div>
+    <div class="arch-box" style="border-color:var(--border-crit)">
+      <div class="box-title" style="color:var(--crit)">api.anthropic.com ⚠</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+        Full TLS interception by sdk-daemon<br>
+        Every API call decrypted + inspected<br>
+        Proxy CA installed as trusted root<br>
+        Claude API, Statsig, Sentry<br>
+        *.anthropic.com wildcard
       </div>
+    </div>
 
-      <div class="box box-linux">
-        <div class="box-title">
-          sandbox-helper
-          <span class="tag tag-linux">ELF64 / setuid</span>
-          <span class="tag tag-safe">priv-drop</span>
-        </div>
-        <div class="item highlight"><code>sandbox-helper &lt;uid&gt; &lt;gid&gt; &lt;cmd&gt; [args...]</code></div>
-        <div class="item">Reads: <code>/etc/srt-settings.base.json</code></div>
-        <div class="item">setuid &rarr; setgid &rarr; exec(command)</div>
-        <div class="item">Pipe: stdout/stderr &rarr; sdk-daemon event stream</div>
-        <div class="item">Shell-escapes args (al.essio.dev/shellescape)</div>
-        <div class="item">BuildSrtCommand: assembles safe shell invocation</div>
-        <div class="item note">Purpose: drop from root to user UID before exec</div>
+    <div class="arch-box">
+      <div class="box-title">github.com</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+        Allowlisted, not TLS-stripped<br>
+        OAuth token checked against approvedTokens<br>
+        Token passed via <code>addApprovedOauthToken</code><br>
+        git clone, API calls, repo access<br>
+        Proxy sees all traffic patterns + timing
       </div>
+    </div>
 
+    <div class="arch-box" style="border-color:var(--border-warn)">
+      <div class="box-title" style="color:var(--warn)">Everything Else</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+        BLOCKED by sdk-daemon allowlist<br>
+        deniedDomains: [] (allowlist is the gate)<br>
+        allowLocalBinding: true<br>
+        <code>[proxy] blocking request - domain not allowed</code>
+      </div>
     </div>
   </div>
 
-  <!-- ====================== CONNECTOR: VM -> Network ====================== -->
-  <div class="vconn">
-    <div class="vconn-spacer"></div>
-    <div class="vconn-content">
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(240,80,96,0.5),transparent)"></div></div>
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+</div><!-- /arch-diagram -->
+
+<h2>Browser Native Messaging Bridge (macOS)</h2>
+
+<p>Claude Desktop silently installs a Native Messaging host manifest
+(<code>com.anthropic.claude_browser_extension.json</code>) into the configuration
+directories of multiple Chromium-based browsers — Chrome, Edge, Brave, Arc,
+Vivaldi, Opera, and others — including browsers not present on the device at
+install time. The manifest pre-authorizes specific extension IDs to communicate
+with a local Rust binary (<code>chrome-native-host</code>, 2.1 MB, universal
+x86_64+arm64) running outside the browser sandbox at user privilege. No disclosure
+is made during installation. No consent is requested.</p>
+
+<p>The associated Chrome extension requests three permissions that together cover
+the same traffic as the Cowork MITM:</p>
+
+<div class="arch-diagram" style="grid-template-columns:1fr 1fr 1fr;margin:1rem 0;">
+  <div class="arch-box">
+    <div class="box-title">debugger</div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+      Attach Chrome DevTools Protocol to any tab<br>
+      Full read/write of page state, network, storage<br>
+      Operates outside normal extension sandbox
     </div>
   </div>
-
-  <div class="connector-row">
-    <div class="arrow-col"><div class="arrow-label net">allowlisted traffic (npm, pypi, github, ubuntu, crates.io)</div></div>
-    <div class="arrow-col"><div class="arrow-label mitm"><span class="mitm-badge">MITM</span> api.anthropic.com: TLS decrypt &rarr; inspect &rarr; re-encrypt</div></div>
-    <div class="arrow-col"><div class="arrow-label net">blocked: everything not in allowedDomains</div></div>
-  </div>
-
-  <div class="vconn">
-    <div class="vconn-spacer"></div>
-    <div class="vconn-content">
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(240,80,96,0.5),transparent)"></div></div>
-      <div class="vcol"><div class="vline" style="background:linear-gradient(180deg,transparent,rgba(91,155,213,0.5),transparent)"></div></div>
+  <div class="arch-box">
+    <div class="box-title">&lt;all_urls&gt;</div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+      Content script injection into any page<br>
+      DOM access, form reads, screen capture<br>
+      No per-site consent required
     </div>
   </div>
-
-  <!-- ====================== NETWORK LAYER ====================== -->
-  <div class="layer layer-net">
-    <div class="layer-label">Internet</div>
-    <div class="layer-content">
-
-      <div class="box" style="flex:0.6">
-        <div class="box-title">Package Registries</div>
-        <div class="item">registry.npmjs.org</div>
-        <div class="item">pypi.org / pythonhosted.org</div>
-        <div class="item">crates.io</div>
-        <div class="item">yarnpkg.com</div>
-        <div class="item">archive/security.ubuntu.com</div>
-        <div class="item ok">Proxied, not TLS-stripped</div>
-        <div class="item warn">GitHub OAuth tokens need approval</div>
-      </div>
-
-      <div class="box" style="flex:0.4; border-color:rgba(240,80,96,0.4); background:rgba(240,80,96,0.04)">
-        <div class="box-title" style="color:var(--danger)">api.anthropic.com <span class="mitm-badge">&#x26A0;</span></div>
-        <div class="item warn">Full TLS interception by sdk-daemon</div>
-        <div class="item warn">Every API call decrypted + inspected</div>
-        <div class="item warn">Proxy CA installed as trusted root</div>
-        <div class="item">Claude API, Statsig, Sentry</div>
-        <div class="item note">*.anthropic.com wildcard</div>
-      </div>
-
-      <div class="box" style="flex:0.5">
-        <div class="box-title">github.com</div>
-        <div class="item">Allowlisted, not TLS-stripped</div>
-        <div class="item warn">OAuth token checked against approvedTokens</div>
-        <div class="item warn">Token passed via addApprovedOauthToken</div>
-        <div class="item">git clone, API calls, repo access</div>
-        <div class="item note">Proxy sees all traffic patterns + timing</div>
-      </div>
-
-      <div class="box" style="flex:0.5; border-color:rgba(240,80,96,0.3); background:rgba(240,80,96,0.03)">
-        <div class="box-title" style="color:var(--danger)">Everything Else</div>
-        <div class="item warn">BLOCKED by sdk-daemon allowlist</div>
-        <div class="item">deniedDomains: [] (allowlist is the gate)</div>
-        <div class="item">allowLocalBinding: true</div>
-        <div class="item note">[proxy] blocking request - domain not allowed</div>
-      </div>
-
+  <div class="arch-box" style="border-color:var(--border-crit)">
+    <div class="box-title" style="color:var(--crit)">webRequest on api.anthropic.com</div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">
+      Intercept all requests to <code>api.anthropic.com</code><br>
+      Read request bodies before they leave the browser<br>
+      Browser-layer analog to Cowork TLS interception
     </div>
   </div>
+</div>
 
-</div><!-- /diagram -->
+<p>The full signal path from browser to system:</p>
 
-<!-- ====================== DATA FLOW TRACES ====================== -->
-<div class="flow-section" style="margin-top:36px; max-width:1100px">
-  <div class="flow-title">Critical Data Flow Traces</div>
+<div class="flow" style="margin:0.8rem 0 1.2rem">
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">Chrome extension (sandboxed JS)</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt"><code>chrome.runtime.connectNative()</code> &rarr; <code>chrome-native-host</code> (Rust, outside sandbox, user privilege)</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">Unix domain socket &rarr; Claude Desktop main process</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">WebSocket bridge &rarr; MCP servers</span></div>
+  <div class="flow-note">* Rust binary runs outside browser sandbox. webRequest listener sits on api.anthropic.com at the browser network layer.</div>
+</div>
+
+<div class="amendment">
+  <div class="amend-title">Independent discovery timeline</div>
+  <p>This surface was mapped in January 2026: native host identification,
+  multi-browser pre-registration across browsers not yet installed, and
+  <code>webRequest</code> interception capability on <code>api.anthropic.com</code>
+  documented in session logs. Public coverage appeared approximately three months
+  later.</p>
+  <p style="margin-top:0.6rem">The browser-layer interception is the direct macOS analog to the Cowork
+  TLS MITM documented above. One operates inside the VM at the TLS layer via an
+  installed CA. The other operates inside the browser at the network request layer
+  via a pre-authorized extension. Both reach the same Anthropic API traffic. The
+  mechanism differs; the capability does not.</p>
+</div>
+
+<h2>Critical Data Flow Traces</h2>
+
+<div class="flow-section">
 
   <div class="flow">
-    <div class="flow-node win">User types in Claude UI</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node win">claude.exe renderer</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node win">IPC &rarr; main process</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node win">cowork-svc pipe (Anthropic cert)</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">sdk-daemon spawn()</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">sandbox-helper uid/gid</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">user process</div>
+    <div class="flow-title">User input to process execution</div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">User types in Claude UI</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">claude.exe renderer</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">IPC &rarr; main process</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">cowork-svc pipe (Anthropic cert)</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sdk-daemon spawn()</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sandbox-helper uid/gid</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">user process</span></div>
   </div>
 
   <div class="flow">
-    <div class="flow-node linux">user process stdout</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">sdk-daemon event stream</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node purple">subscribeEvents (ANY caller)</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node win">claude.exe UI update</div>
+    <div class="flow-title">Process output to UI</div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">user process stdout</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sdk-daemon event stream</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">subscribeEvents (ANY caller)</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">claude.exe UI update</span></div>
     <div class="flow-note">* event stream open to unsigned clients</div>
   </div>
 
   <div class="flow">
-    <div class="flow-node linux">vm process: fetch api.anthropic.com</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node red">sdk-daemon MITM proxy</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node red">TLS decrypt (own CA)</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node red">inspect plaintext API call</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node red">re-encrypt &rarr; forward</div>
+    <div class="flow-title">VM process calling api.anthropic.com</div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">vm process: fetch api.anthropic.com</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sdk-daemon MITM proxy</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">TLS decrypt (own CA)</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">inspect plaintext API call</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">re-encrypt &rarr; forward</span></div>
   </div>
 
   <div class="flow">
-    <div class="flow-node linux">vm process: git push (GitHub)</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">sdk-daemon proxy</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">check approvedTokens list</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node net">forward (TLS not stripped)</div>
-    <div class="flow-note">* token must be whitelisted via addApprovedOauthToken from claude.exe</div>
+    <div class="flow-title">GitHub access from VM</div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">vm process: git push (GitHub)</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sdk-daemon proxy</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">check approvedTokens list</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">forward (TLS not stripped)</span></div>
+    <div class="flow-warn">* token must be whitelisted via addApprovedOauthToken from claude.exe</div>
   </div>
 
   <div class="flow">
-    <div class="flow-node linux">sdk-daemon [updater]</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">file change detected (old hash != new hash)</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node linux">event: type=update, old=..., new=...</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node purple">subscribeEvents stream</div>
-    <div class="flow-arrow">&rarr;</div>
-    <div class="flow-node win">claude.exe handler</div>
-    <div class="flow-note">* candidate explanation for 23:15 tool-cdn restoration</div>
+    <div class="flow-title">sdk-daemon updater (file restoration)</div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">sdk-daemon [updater]</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">file change detected (old hash &ne; new hash)</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">event: type=update, old=&hellip;, new=&hellip;</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">subscribeEvents stream</span></div>
+    <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">claude.exe handler</span></div>
+    <div class="flow-warn">* candidate explanation for 23:15 tool-cdn restoration</div>
   </div>
 
+</div><!-- /flow-section -->
+
+<h2>Key Findings</h2>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>MITM on *.anthropic.com</h3>
+  <p>sdk-daemon installs its own CA certificate and performs full TLS interception
+  on all traffic to <code>*.anthropic.com</code> from inside the VM. Every API call —
+  including Claude completions, auth tokens, and telemetry — is decrypted,
+  inspectable, and re-encrypted before leaving the machine. This is by design:
+  Anthropic can inject headers, observe prompts, enforce policy, or modify
+  responses at the proxy layer.</p>
 </div>
 
-<!-- ====================== FINDINGS ====================== -->
-<div class="findings" style="max-width:1100px">
-
-  <div class="finding-card critical">
-    <div class="finding-title">MITM on *.anthropic.com</div>
-    <div class="finding-body">
-      sdk-daemon installs its own CA certificate and performs full TLS interception on all traffic to <code>*.anthropic.com</code> from inside the VM. Every API call — including Claude completions, auth tokens, and telemetry — is decrypted, inspectable, and re-encrypted before leaving the machine. This is by design: Anthropic can inject headers, observe prompts, enforce policy, or modify responses at the proxy layer.
-    </div>
-  </div>
-
-
-  <div class="amendment-card">
-    <div class="amendment-title">Scope of interception</div>
-    <p>The interception applies to every process running inside the VM that makes a TLS connection to <code>*.anthropic.com</code> — this includes the AI model completions endpoint, authentication, telemetry, and any other Anthropic service on that domain. The CA certificate is installed as a trusted root inside the guest. There is no opt-out available to guest processes: they cannot distinguish the proxy's re-encrypted response from a response from the real endpoint using standard TLS verification, because the proxy's CA is in their trust store. Any process inside the VM therefore sees the intercepted connection as legitimate TLS.</p>
-  </div>
-
-  <div class="finding-card critical">
-    <div class="finding-title">subscribeEvents: No Auth</div>
-    <div class="finding-body">
-      The only unauthenticated method on the cowork-svc pipe. Any process can subscribe and receive real-time stdout/stderr/exit/network events from whatever the VM is running. On machines where the VM is active, this leaks all process output — including AI responses, code execution results, and file contents — to any local listener.
-    </div>
-  </div>
-
-
-  <div class="amendment-card">
-    <div class="amendment-title">Observation without authentication compounds with execution</div>
-    <p>There are two distinct capabilities on the cowork-svc pipe: the ability to <em>command</em> (create VMs, spawn processes, read files) and the ability to <em>observe</em> (receive stdout, stderr, exit codes, and network events from running processes). The command surface requires the Anthropic-signed <code>claude.exe</code> certificate. The observation surface does not.</p>
-    <p>This asymmetry means that while arbitrary processes cannot control the VM, they can watch everything it produces in real time. Any local process — including third-party tools, MCP servers spawned by Claude Desktop, or background services — can subscribe to the event stream and receive the output of whatever is executing in the VM. Output that contains file contents, code, AI responses, or credentials is delivered to any subscriber without authentication.</p>
-  </div>
-
-  <div class="finding-card notable">
-    <div class="finding-title">Tool-CDN Restoration (23:15)</div>
-    <div class="finding-body">
-      sdk-daemon's <code>[updater]</code> compares old vs new file hashes. When catabolism.js was modified (breaking exeray-mcp.js), the updater detected drift from the original deployment hash and triggered restoration via the virtiofs mount — writing back through the guest-to-host share. Writer PID null in RDCX because the Go process exits before chokidar processes the notification.
-    </div>
-  </div>
-
-
-  <div class="amendment-card">
-    <div class="amendment-title">The writable path is not bounded to a single directory</div>
-    <p>The restoration event documented here involved one specific directory. The mechanism — the updater detecting file hash drift and writing back through the guest-to-host mount — is not specific to that path. The mount gives the guest access to host paths configured at VM startup. Any file in any path accessible through that mount can be monitored for drift and restored.</p>
-    <p>The restoration operates without user interaction or notification. The parent process does not emit a signal when a restoration occurs. The only indication is the file change event in a filesystem monitor, which is how the 23:15 event was identified here.</p>
-  </div>
-
-  <div class="finding-card notable">
-    <div class="finding-title">GitHub OAuth Token Gate</div>
-    <div class="finding-body">
-      GitHub traffic is proxied but not TLS-decrypted. However, OAuth tokens are intercepted and validated against an in-memory approved list managed by cowork-svc via <code>addApprovedOauthToken</code>. Tokens must be explicitly passed from claude.exe. The proxy logs: <code>[proxy] added approved OAuth token (hash: %x...)</code> on each addition.
-    </div>
-  </div>
-
-  <div class="finding-card neutral">
-    <div class="finding-title">VM Disabled on This Machine</div>
-    <div class="finding-body">
-      cowork-svc logs <code>VM not supported (win32/x64)</code> — Hyper-V is either absent or disabled. The service runs with SYSTEM privileges and holds the pipe open but cannot start a VM. All VM-gated methods return auth errors from our probes. The <code>subscribeEvents</code> endpoint returns <code>success:true</code> then immediately closes — no active sessions.
-    </div>
-  </div>
-
-
-  <div class="amendment-card">
-    <div class="amendment-title">The SYSTEM-privileged service surface persists regardless of VM availability</div>
-    <p>When Hyper-V is absent or disabled, cowork-svc cannot start a VM. The service still runs at SYSTEM privilege and holds the named pipe open. The <code>subscribeEvents</code> endpoint still accepts connections. The SYSTEM-privileged service surface with an unauthenticated observation endpoint is present on the machine regardless of whether the VM capability is active.</p>
-    <p>VM-gated methods returning auth errors reduces the attack surface but does not eliminate the SYSTEM-privileged process or the unauthenticated event stream.</p>
-  </div>
-
-  <div class="finding-card neutral">
-    <div class="finding-title">Cert Architecture</div>
-    <div class="finding-body">
-      cowork-svc embeds the expected client thumbprint (<code>dbde5d16768ed0c1</code>) and validates every connection except subscribeEvents. Claude.exe is signed by Anthropic, PBC and passes. Node.js (OpenJS Foundation) fails. This prevents MCP servers or arbitrary local processes from controlling the VM — all VM operations must flow through the signed Electron binary.
-    </div>
-  </div>
-
-  <div class="amendment-card">
-    <div class="amendment-title">Certificate validation is an authentication gate, not a behavioral boundary</div>
-    <p>The mutual TLS authentication on cowork-svc methods establishes that only the signed <code>claude.exe</code> binary can issue commands to the VM. It does not constrain what those commands can do, what the VM produces, or who can observe that output.</p>
-    <p>The cert architecture answers the question: "who is allowed to act?" It does not answer: "what is the acting party allowed to do?" and it explicitly does not apply to observation at all. These are three different security questions, and the cert architecture addresses only the first.</p>
-  </div>
-
+<!-- AMENDMENT A -->
+<div class="amendment">
+  <div class="amend-title">Scope of interception</div>
+  <p>The interception applies to every process running inside the VM that makes a
+  TLS connection to <code>*.anthropic.com</code> — this includes the AI model completions
+  endpoint, authentication, telemetry, and any other Anthropic service on that
+  domain. The CA certificate is installed as a trusted root inside the guest. There
+  is no opt-out available to guest processes: they cannot distinguish the proxy's
+  re-encrypted response from a response from the real endpoint using standard TLS
+  verification, because the proxy's CA is in their trust store. Any process inside
+  the VM therefore sees the intercepted connection as legitimate TLS.</p>
 </div>
 
-<div style="margin-top:36px; max-width:1100px; font-size:10px; color:var(--text-faint); border-top:1px solid var(--border); padding-top:12px">
-  Sources: app.asar extraction (index.js vm-client code) &bull; cowork-svc.exe pipe interrogation (80 probes) &bull; sdk-daemon-strings.json (20,422 strings) &bull; sandbox-helper-strings.json (6,242 strings) &bull; srt-settings.json &bull; audit-nexus fs_events (625,806 rows) &bull; cowork-event-feed active (PID 2388) &bull; <a href="/x01-capability-restructuring" style="color:inherit;text-decoration:none">x01-capability-restructuring</a> &bull; <a href="/independent-verification" style="color:inherit;text-decoration:none">independent-verification</a>
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>subscribeEvents: No Auth</h3>
+  <p>The only unauthenticated method on the cowork-svc pipe. Any process can
+  subscribe and receive real-time stdout/stderr/exit/network events from whatever
+  the VM is running. On machines where the VM is active, this leaks all process
+  output — including AI responses, code execution results, and file contents — to
+  any local listener.</p>
 </div>
 
+<!-- AMENDMENT B -->
+<div class="amendment">
+  <div class="amend-title">Observation without authentication compounds with execution</div>
+  <p>There are two distinct capabilities on the cowork-svc pipe: the ability to
+  <em>command</em> (create VMs, spawn processes, read files) and the ability to
+  <em>observe</em> (receive stdout, stderr, exit codes, and network events from running
+  processes). The command surface requires the Anthropic-signed <code>claude.exe</code>
+  certificate. The observation surface does not.</p>
+  <p style="margin-top:0.6rem">This asymmetry means that while arbitrary processes cannot control the VM, they
+  can watch everything it produces in real time. Any local process — including
+  third-party tools, MCP servers spawned by Claude Desktop, or background services
+  — can subscribe to the event stream and receive the output of whatever is
+  executing in the VM. Output that contains file contents, code, AI responses, or
+  credentials is delivered to any subscriber without authentication.</p>
+</div>
 
-<div class="capability-section">
-  <h2>The Capability Evaluator and the Writable Path</h2>
-  <p>A capability evaluator is a component that analyzes a system — typically by examining its binaries, network behavior, and process structure — and produces a structured description of what the system can do. Its value depends entirely on its independence from the system it is evaluating. An evaluator that can be modified by the system it monitors is not an independent observer; it is a component of the system, and its output can be shaped by the system's behavior.</p>
-  <p><a href="/x01-capability-restructuring" style="color:var(--network)">A later analysis page</a> documents that after the cowork audit was published, the evaluator used to analyze the sandbox's capability surface was modified to prevent it from confirming two of the capabilities the audit identified. The capabilities remained in the evaluator's dependency graph. The tests were modified to ensure the evaluator would not qualify the prerequisite needed to detect them.</p>
-  <p>There is a further structural point not documented on that page.</p>
-  <p>The evaluator's repair pathway — the code that would restore the pre-modification detection behavior — is stored in a directory that the updater mechanism has demonstrated write access to. The 23:15 restoration event documented above shows that mechanism writing back to a host directory autonomously when file hash drift is detected.</p>
-  <p>This means the component designed to detect what the infrastructure is doing contains, in a path the infrastructure can write to, the code that would restore its ability to detect the infrastructure's behavior.</p>
-  <div class="structural-finding">
-    <span class="sf-label">Structural Finding</span>
-    The evaluator's source, its test suite, and its repair pathway are all potentially within the write surface of the system they are intended to monitor. Whether that surface has been used for that purpose is not established by the presented evidence. That it exists is.
-  </div>
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>Tool-CDN Restoration (23:15)</h3>
+  <p>sdk-daemon's <code>[updater]</code> compares old vs new file hashes. When catabolism.js
+  was modified (breaking exeray-mcp.js), the updater detected drift from the
+  original deployment hash and triggered restoration via the virtiofs mount —
+  writing back through the guest-to-host share. Writer PID null in RDCX because
+  the Go process exits before chokidar processes the notification.</p>
+</div>
+
+<!-- AMENDMENT C -->
+<div class="amendment">
+  <div class="amend-title">The writable path is not bounded to a single directory</div>
+  <p>The restoration event documented here involved one specific directory. The
+  mechanism — the updater detecting file hash drift and writing back through the
+  guest-to-host mount — is not specific to that path. The mount gives the guest
+  access to host paths configured at VM startup. Any file in any path accessible
+  through that mount can be monitored for drift and restored.</p>
+  <p style="margin-top:0.6rem">The restoration operates without user interaction or notification. The parent
+  process does not emit a signal when a restoration occurs. The only indication
+  is the file change event in a filesystem monitor, which is how the 23:15 event
+  was identified here.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>GitHub OAuth Token Gate</h3>
+  <p>GitHub traffic is proxied but not TLS-decrypted. However, OAuth tokens are
+  intercepted and validated against an in-memory approved list managed by
+  cowork-svc via <code>addApprovedOauthToken</code>. Tokens must be explicitly passed from
+  claude.exe. The proxy logs:
+  <code>[proxy] added approved OAuth token (hash: %x...)</code> on each addition.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>Cert Architecture</h3>
+  <p>cowork-svc embeds the expected client thumbprint
+  (<code>dbde5d16768ed0c1</code>) and validates every connection except
+  <code>subscribeEvents</code>. Claude.exe is signed by Anthropic, PBC and passes.
+  Node.js (OpenJS Foundation) fails. This prevents MCP servers or arbitrary local
+  processes from controlling the VM — all VM operations must flow through the
+  signed Electron binary.</p>
+</div>
+
+<!-- AMENDMENT D -->
+<div class="amendment">
+  <div class="amend-title">Certificate validation is an authentication gate, not a behavioral boundary</div>
+  <p>The mutual TLS authentication on cowork-svc methods establishes that only the
+  signed <code>claude.exe</code> binary can issue commands to the VM. It does not constrain
+  what those commands can do, what the VM produces, or who can observe that output.</p>
+  <p style="margin-top:0.6rem">The cert architecture answers the question: "who is allowed to act?" It does
+  not answer: "what is the acting party allowed to do?" and it explicitly does not
+  apply to observation at all. These are three different security questions, and
+  the cert architecture addresses only the first.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="finding">
+  <h3>VM Disabled on This Machine</h3>
+  <p>cowork-svc logs <code>VM not supported (win32/x64)</code> — Hyper-V is either absent or
+  disabled. The service runs with SYSTEM privileges and holds the pipe open but
+  cannot start a VM. All VM-gated methods return auth errors from our probes. The
+  <code>subscribeEvents</code> endpoint returns <code>success:true</code> then immediately closes
+  — no active sessions.</p>
+</div>
+
+<!-- AMENDMENT E -->
+<div class="amendment">
+  <div class="amend-title">The SYSTEM-privileged service surface persists regardless of VM availability</div>
+  <p>When Hyper-V is absent or disabled, cowork-svc cannot start a VM. The service
+  still runs at SYSTEM privilege and holds the named pipe open. The
+  <code>subscribeEvents</code> endpoint still accepts connections. The SYSTEM-privileged
+  service surface with an unauthenticated observation endpoint is present on the
+  machine regardless of whether the VM capability is active.</p>
+  <p style="margin-top:0.6rem">VM-gated methods returning auth errors reduces the attack surface but does not
+  eliminate the SYSTEM-privileged process or the unauthenticated event stream.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="sources">
+  <p>Sources: app.asar extraction (index.js vm-client code) &nbsp;·&nbsp;
+  cowork-svc.exe pipe interrogation (80 probes) &nbsp;·&nbsp;
+  sdk-daemon-strings.json (20,422 strings) &nbsp;·&nbsp;
+  sandbox-helper-strings.json (6,242 strings) &nbsp;·&nbsp;
+  srt-settings.json &nbsp;·&nbsp;
+  audit-nexus fs_events (625,806 rows) &nbsp;·&nbsp;
+  cowork-event-feed active (PID 2388) &nbsp;·&nbsp;
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a></p>
+</div>
+
+<!-- AMENDMENT F -->
+<h2>The Capability Evaluator and the Writable Path</h2>
+
+<p>A capability evaluator is a component that analyzes a system — typically by
+examining its binaries, network behavior, and process structure — and produces a
+structured description of what the system can do. Its value depends entirely on its
+independence from the system it is evaluating. An evaluator that can be modified by
+the system it monitors is not an independent observer; it is a component of the
+system, and its output can be shaped by the system's behavior.</p>
+
+<p><a href="/x01-capability-restructuring">A later analysis page</a> documents that after the
+cowork audit was published, the evaluator used to analyze the sandbox's capability
+surface was modified to prevent it from confirming two of the capabilities the audit
+identified. The capabilities remained in the evaluator's dependency graph. The tests
+were modified to ensure the evaluator would not qualify the prerequisite needed to
+detect them.</p>
+
+<p>There is a further structural point not documented on that page.</p>
+
+<p>The evaluator's repair pathway — the code that would restore the pre-modification
+detection behavior — is stored in a directory that the updater mechanism has
+demonstrated write access to. The 23:15 restoration event documented above shows
+that mechanism writing back to a host directory autonomously when file hash drift
+is detected.</p>
+
+<p>This means the component designed to detect what the infrastructure is doing
+contains, in a path the infrastructure can write to, the code that would restore
+its ability to detect the infrastructure's behavior.</p>
+
+<div class="warn-box">
+  <span class="label">Structural Finding</span>
+  The evaluator's source, its test suite, and its repair pathway are all potentially
+  within the write surface of the system they are intended to monitor. Whether that
+  surface has been used for that purpose is not established by the presented evidence.
+  That it exists is.
+</div>
+
+<div class="page-footer">
+  <span>cowork.exponential-systems.net</span>
+  <span>·</span>
+  <a href="/independent-verification">independent-verification</a>
+  <span>·</span>
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
+  <span>·</span>
+  <span>2026</span>
 </div>
 
 </body>
