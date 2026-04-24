@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Source Map Leak — Revealed Architecture</title>
+<style>
+:root {
+  --bg:         #0d1117;
+  --bg-card:    #161b22;
+  --bg-code:    #1c2128;
+  --bg-note:    #111820;
+  --bg-warn:    #1a1200;
+  --bg-crit:    #1a0d0d;
+  --border:     #30363d;
+  --border-note:#1f4068;
+  --border-warn:#6e4c00;
+  --border-crit:#8b2020;
+  --text:       #e6edf3;
+  --text-muted: #8b949e;
+  --text-code:  #aff3c8;
+  --accent:     #58a6ff;
+  --warn:       #d29922;
+  --crit:       #f85149;
+  --green:      #3fb950;
+  --mono: 'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1.75;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.page-header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+.breadcrumb { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; letter-spacing: 0.04em; }
+.breadcrumb a { color: var(--text-muted); }
+.breadcrumb a:hover { color: var(--accent); }
+h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; }
+.subtitle { font-size: 0.82rem; color: var(--text-muted); }
+.meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+h2 { font-size: 1rem; font-weight: 700; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+h3 { font-size: 0.9rem; font-weight: 700; color: var(--accent); margin: 1.5rem 0 0.6rem; }
+p { margin-bottom: 0.85rem; }
+strong { font-weight: 700; }
+ul { margin: 0.5rem 0 0.9rem 1.5rem; }
+li { margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--text-muted); }
+li strong { color: var(--text); }
+
+code {
+  font-family: var(--mono); font-size: 0.85em;
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 3px; padding: 0.1em 0.35em; color: var(--text-code);
+}
+pre {
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1rem 1.2rem; overflow-x: auto;
+  margin: 0.8rem 0 1rem; font-family: var(--mono);
+  font-size: 0.82rem; line-height: 1.7; color: var(--text-code);
+}
+pre code { background: none; border: none; padding: 0; }
+
+.note, .warn, .crit {
+  border: 1px solid; border-radius: 4px; padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.2rem; font-size: 0.875rem;
+}
+.note { background: var(--bg-note); border-color: var(--border-note); border-left: 3px solid var(--accent); }
+.note .label { color: var(--accent); }
+.warn { background: var(--bg-warn); border-color: var(--border-warn); border-left: 3px solid var(--warn); }
+.warn .label { color: var(--warn); }
+.crit { background: var(--bg-crit); border-color: var(--border-crit); border-left: 3px solid var(--crit); }
+.crit .label { color: var(--crit); }
+.note .label, .warn .label, .crit .label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; display: block; margin-bottom: 0.35rem;
+}
+
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+.cap-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+}
+.cap-box.hi { border-color: var(--border-warn); }
+.cap-name { font-weight: 700; font-size: 0.88rem; color: var(--warn); margin-bottom: 0.4rem; }
+.cap-name.neutral { color: var(--accent); }
+.cap-flag { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; font-style: italic; }
+.cap-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.83rem; }
+th {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem; text-align: left; font-weight: 700;
+  color: var(--text-muted); font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; vertical-align: top; font-size: 0.82rem; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+.timeline { margin: 1rem 0 1.5rem; }
+.tl-entry {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  align-items: baseline;
+  font-size: 0.83rem;
+}
+.tl-date { color: var(--text-muted); font-size: 0.78rem; }
+.tl-event { color: var(--text); }
+.tl-event.crit { color: var(--crit); }
+.tl-event.warn { color: var(--warn); }
+
+.page-footer {
+  margin-top: 4rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--text-muted);
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+}
+.page-footer a { color: var(--text-muted); }
+.page-footer a:hover { color: var(--accent); }
+
+@media (max-width: 700px) { .cap-grid { grid-template-columns: 1fr; } .tl-entry { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;/&nbsp; claude-code-leak
+  </div>
+  <h1>Claude Code Source Map Leak — Revealed Architecture</h1>
+  <div class="subtitle">
+    <code>@anthropic-ai/claude-code</code> v2.1.88 &nbsp;·&nbsp;
+    March 31, 2026 &nbsp;·&nbsp; ~512,000 lines TypeScript &nbsp;·&nbsp; public artifact
+  </div>
+  <div class="meta">
+    Companion to <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;·&nbsp;
+    <a href="/chrome-extension">chrome-extension</a>
+    &nbsp;·&nbsp; 2026-04
+  </div>
+</div>
+
+<h2>The Leak</h2>
+
+<p>On March 31, 2026, Anthropic published <code>@anthropic-ai/claude-code</code>
+version 2.1.88 to the public npm registry. The package accidentally included
+<code>cli.js.map</code> — a 59.8 MB JavaScript source map file — because Bun
+generates source maps by default and the file was not excluded via
+<code>.npmignore</code> or the <code>files</code> field in
+<code>package.json</code>.</p>
+
+<p>The source map referenced a complete ZIP archive on Anthropic's Cloudflare R2
+infrastructure, making the entire codebase trivially reconstructable. The archive
+contained approximately 1,900 TypeScript source files comprising roughly 512,000
+lines of the production Claude Code harness.</p>
+
+<div class="note">
+  <span class="label">Public Record</span>
+  The leak is a confirmed public artifact with stable, independently verifiable
+  timestamps. It was discovered by security researcher Chaofan Shou and went viral
+  within hours. Anthropic's official statement: <em>"This was a release packaging
+  issue caused by human error, not a security breach."</em> The source map and
+  original npm package contents are archived across multiple platforms. This page
+  documents publicly available findings from independent analyses of the leaked
+  source.
+</div>
+
+<h2>Event Timeline</h2>
+
+<div class="timeline">
+  <div class="tl-entry">
+    <span class="tl-date">2026-02-19</span>
+    <span class="tl-event">cowork.exponential-systems.net published — Windows-side cowork-svc architecture and sdk-daemon TLS interception documented</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-03-12</span>
+    <span class="tl-event warn">Anthropic quietly removes Echo (ambient screen monitor) from Claude Desktop between v1.1.4088 and v1.1.6452 — 16 days after independent publication of the initial Echo discovery</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-03-25</span>
+    <span class="tl-event">Separate CMS misconfiguration exposes internal files referencing unreleased model codename "Claude Mythos" (Capybara)</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-03-30/31</span>
+    <span class="tl-event crit"><code>@anthropic-ai/claude-code</code> v2.1.88 published with <code>cli.js.map</code> included — full TypeScript source accessible</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-03-31 ~08:23 UTC</span>
+    <span class="tl-event">Chaofan Shou posts discovery on X — tens of millions of views within 24 hours; source widely extracted and mirrored</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-03-31</span>
+    <span class="tl-event warn">Anthropic issues DMCA takedowns — approximately 8,100 repositories removed, including unrelated forks; partially retracted</span>
+  </div>
+  <div class="tl-entry">
+    <span class="tl-date">2026-04-20</span>
+    <span class="tl-event">The Register covers Claude Desktop Native Messaging manifest installation — findings independently discovered January 2026, now in mainstream coverage</span>
+  </div>
+</div>
+
+<h2>Revealed Capabilities</h2>
+
+<p>Independent analysts produced detailed breakdowns of the leaked source. The
+following capability descriptions are drawn from public analyses published after
+March 31, 2026.</p>
+
+<div class="cap-grid">
+
+  <div class="cap-box hi">
+    <div class="cap-name">KAIROS</div>
+    <div class="cap-flag">Flags: <code>tengu_onyx_plover</code>, <code>KAIROS_DREAM</code></div>
+    <div class="cap-desc">
+      Persistent background daemon. Runs autonomously without user initiation.
+      Responds to external hooks — GitHub webhooks, Slack events, scheduled
+      triggers. Performs overnight memory consolidation during idle periods.
+      Operates as a continuously-running agent process rather than a
+      session-bound tool.
+    </div>
+  </div>
+
+  <div class="cap-box hi">
+    <div class="cap-name">autoDream / DREAM</div>
+    <div class="cap-flag">Three-tier memory consolidation</div>
+    <div class="cap-desc">
+      Background process in which the agent reviews its own stored observations,
+      prunes contradictions, and merges notes across sessions. Runs during idle
+      periods. Described in analyses as Claude "dreaming" to improve long-term
+      context retention. Produces consolidated memory artifacts without user
+      instruction.
+    </div>
+  </div>
+
+  <div class="cap-box hi">
+    <div class="cap-name">Coordinator Mode</div>
+    <div class="cap-flag">Multi-agent orchestration</div>
+    <div class="cap-desc">
+      Breaks tasks into sub-tasks and delegates them to worker sub-agents.
+      Each worker operates in an isolated Git worktree. The coordinator
+      aggregates results. Implements a 3-tier agent hierarchy. Operates
+      without requiring the user to be present once initiated.
+    </div>
+  </div>
+
+  <div class="cap-box hi">
+    <div class="cap-name">ULTRAPLAN</div>
+    <div class="cap-flag">Remote planning offload</div>
+    <div class="cap-desc">
+      Offloads complex planning tasks to a remote cloud instance running
+      Opus-class models for up to 30 minutes. Results are "teleported" back
+      to the local session. The local process remains running while remote
+      planning executes independently.
+    </div>
+  </div>
+
+  <div class="cap-box hi">
+    <div class="cap-name">Undercover Mode</div>
+    <div class="cap-flag">Attribution obfuscation</div>
+    <div class="cap-desc">
+      A mode in which Anthropic employee contributions are hidden to appear
+      as activity from an external developer. Identified in Alex Kim's public
+      analysis of the leaked source. The mechanism causes contributions made
+      under an Anthropic identity to be attributed differently in the
+      observable record.
+    </div>
+  </div>
+
+  <div class="cap-box hi">
+    <div class="cap-name">Anti-Distillation Tools</div>
+    <div class="cap-flag">Competitor interference mechanisms</div>
+    <div class="cap-desc">
+      Fake tool implementations designed to produce misleading outputs when
+      the system is being probed by a process attempting to replicate or
+      extract its behavior. Identified in the leaked source as a mechanism
+      to hinder competitors from copying the harness design.
+    </div>
+  </div>
+
+  <div class="cap-box">
+    <div class="cap-name neutral">Daemon Mode</div>
+    <div class="cap-flag">Persistent background agent</div>
+    <div class="cap-desc">
+      A general-purpose background execution mode allowing Claude Code to
+      run as a system daemon process independent of any active user session.
+    </div>
+  </div>
+
+  <div class="cap-box">
+    <div class="cap-name neutral">UDS Inbox</div>
+    <div class="cap-flag">Inter-process communication</div>
+    <div class="cap-desc">
+      Unix domain socket inbox for receiving messages from other processes.
+      Enables Claude Code instances to receive instructions or data from
+      external agents without a user-initiated prompt.
+    </div>
+  </div>
+
+  <div class="cap-box">
+    <div class="cap-name neutral">Frustration Detection</div>
+    <div class="cap-flag">Sentiment analysis on user input</div>
+    <div class="cap-desc">
+      Regex-based detection of frustration signals in user messages.
+      Modifies agent behavior when frustration indicators are present.
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <span class="label">Feature Flags</span>
+  Public analyses identified approximately 44 hidden or unshipped feature flags
+  in the leaked source, including: <code>BUDDY</code> (Tamagotchi-style AI
+  companion), <code>KAIROS</code>, <code>ULTRAPLAN</code>, Coordinator Mode,
+  Daemon Mode, UDS Inbox. Flags are served via Statsig integration. The
+  feature-flag infrastructure gives Anthropic fine-grained control over which
+  capabilities are active per user, per session, or per build — without any
+  indication to the user that additional capability exists.
+</div>
+
+<h2>Relationship to Previously Documented Surfaces</h2>
+
+<p>The leaked source reveals a harness whose persistent-agent capabilities mirror
+what the documented surfaces enable at the browser and OS layers:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Leaked Capability</th>
+  <th>Browser / OS Analog</th>
+  <th>Documented</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>KAIROS</strong> — persistent daemon responding to external hooks</td>
+  <td>Chrome extension <code>alarms</code> API + scheduled task runner — autonomous browser execution on schedule</td>
+  <td><a href="/chrome-extension">chrome-extension</a></td>
+</tr>
+<tr>
+  <td><strong>Coordinator Mode</strong> — multi-agent orchestration with isolated workspaces</td>
+  <td>cowork-svc VM per-conversation overlay VHDX — isolated execution environment per session</td>
+  <td><a href="/">cowork.exponential-systems.net</a></td>
+</tr>
+<tr>
+  <td><strong>Daemon Mode / UDS Inbox</strong> — persistent process, IPC</td>
+  <td>cowork-svc persists across Claude sessions and MCP restarts; named pipe always open</td>
+  <td><a href="/">cowork.exponential-systems.net</a></td>
+</tr>
+<tr>
+  <td><strong>Undercover Mode</strong> — attribution obfuscation</td>
+  <td>Commit authorship using <code>whyuan@anthropic.com</code> through a personal GitHub account with no visible Anthropic affiliation — documented in the whyuan-cc PR analysis</td>
+  <td><a href="/x01-capability-restructuring">x01-capability-restructuring</a></td>
+</tr>
+<tr>
+  <td><strong>Anti-distillation tools</strong> — fake tool responses</td>
+  <td>x01-capability-restructuring — evaluator modified to prevent confirmation of specific capabilities after their publication</td>
+  <td><a href="/x01-capability-restructuring">x01-capability-restructuring</a></td>
+</tr>
+<tr>
+  <td><strong>Segment analytics</strong> — behavioral tracking (<code>SEGMENT_WRITE_KEY</code> in source)</td>
+  <td>Chrome extension Segment integration with 21-event behavioral vocabulary</td>
+  <td><a href="/chrome-extension">chrome-extension</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Suppression Response</h2>
+
+<p>Anthropic's response to the leak established a pattern consistent with prior
+responses to capability disclosures on this site:</p>
+
+<ul>
+  <li><strong>Immediate DMCA wave</strong> — approximately 8,100 repositories
+  removed within hours, including repositories unrelated to the leaked source.
+  The wave was partially retracted after public criticism.</li>
+
+  <li><strong>Scrubbing of the original artifact</strong> — the R2 ZIP and npm
+  package contents were removed from Anthropic's infrastructure. The
+  <code>cli.js.map</code> file is no longer served from the original URL. Multiple
+  independent mirrors remain.</li>
+
+  <li><strong>Official characterization as human error</strong> — Anthropic's
+  statement attributed the exposure to a build pipeline configuration oversight,
+  not a security breach. The statement did not address the capability findings
+  in the leaked source.</li>
+</ul>
+
+<div class="warn">
+  <span class="label">Pattern Note</span>
+  This is the third documented removal event in six weeks: the Claude Mythos CMS
+  leak (March 25), the Claude Code source map (March 31), and the earlier removal
+  of Echo from Claude Desktop between v1.1.4088 and v1.1.6452 (March 12 — 16 days
+  after independent discovery). Each removal followed within days of public
+  identification. Each was characterized as unintentional or unrelated to the
+  findings.
+</div>
+
+<div class="page-footer">
+  <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+  <span>&middot;</span>
+  <a href="/independent-verification">independent-verification</a>
+  <span>&middot;</span>
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
+  <span>&middot;</span>
+  <a href="/chrome-extension">chrome-extension</a>
+  <span>&middot;</span>
+  <span>claude-code-leak</span>
+  <span>&middot;</span>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
