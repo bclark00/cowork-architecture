@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Chrome Extension — Capability Surface Analysis</title>
+<style>
+:root {
+  --bg:         #0d1117;
+  --bg-card:    #161b22;
+  --bg-code:    #1c2128;
+  --bg-note:    #111820;
+  --bg-warn:    #1a1200;
+  --bg-crit:    #1a0d0d;
+  --border:     #30363d;
+  --border-note:#1f4068;
+  --border-warn:#6e4c00;
+  --border-crit:#8b2020;
+  --text:       #e6edf3;
+  --text-muted: #8b949e;
+  --text-code:  #aff3c8;
+  --accent:     #58a6ff;
+  --warn:       #d29922;
+  --crit:       #f85149;
+  --green:      #3fb950;
+  --mono: 'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1.75;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.page-header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+.breadcrumb { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; letter-spacing: 0.04em; }
+.breadcrumb a { color: var(--text-muted); }
+.breadcrumb a:hover { color: var(--accent); }
+h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; }
+.subtitle { font-size: 0.82rem; color: var(--text-muted); }
+.meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+h2 {
+  font-size: 1rem; font-weight: 700;
+  margin: 2.5rem 0 1rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+h3 { font-size: 0.9rem; font-weight: 700; color: var(--accent); margin: 1.5rem 0 0.6rem; }
+p { margin-bottom: 0.85rem; }
+strong { font-weight: 700; }
+
+code {
+  font-family: var(--mono); font-size: 0.85em;
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 3px; padding: 0.1em 0.35em; color: var(--text-code);
+}
+pre {
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1rem 1.2rem; overflow-x: auto;
+  margin: 0.8rem 0 1rem; font-family: var(--mono);
+  font-size: 0.82rem; line-height: 1.7; color: var(--text-code);
+}
+pre code { background: none; border: none; padding: 0; }
+
+.note, .warn, .crit {
+  border: 1px solid; border-radius: 4px; padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.2rem; font-size: 0.875rem;
+}
+.note { background: var(--bg-note); border-color: var(--border-note); border-left: 3px solid var(--accent); }
+.note .label { color: var(--accent); }
+.warn { background: var(--bg-warn); border-color: var(--border-warn); border-left: 3px solid var(--warn); }
+.warn .label { color: var(--warn); }
+.crit { background: var(--bg-crit); border-color: var(--border-crit); border-left: 3px solid var(--crit); }
+.crit .label { color: var(--crit); }
+.note .label, .warn .label, .crit .label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; display: block; margin-bottom: 0.35rem;
+}
+
+/* Permission grid */
+.perm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+.perm-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  font-size: 0.82rem;
+}
+.perm-box.crit-border { border-color: var(--border-crit); }
+.perm-box.warn-border { border-color: var(--border-warn); }
+.perm-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+.perm-name.crit { color: var(--crit); background: none; border: none; padding: 0; font-size: 0.85rem; }
+.perm-name.warn { color: var(--warn); background: none; border: none; padding: 0; font-size: 0.85rem; }
+.perm-name.ok { color: var(--text-muted); background: none; border: none; padding: 0; font-size: 0.85rem; }
+.perm-desc { color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; }
+
+/* Content script table */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.83rem; }
+th {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem; text-align: left; font-weight: 700;
+  color: var(--text-muted); font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+td { border: 1px solid var(--border); padding: 0.5rem 0.8rem; vertical-align: top; }
+td code { font-size: 0.8em; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+/* Event list */
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.3rem 1.5rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 0.8rem 0 1.2rem;
+}
+.event-grid span {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-code);
+}
+.event-grid span.hi { color: var(--crit); }
+
+/* Flow */
+.flow {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1rem 1.2rem; margin: 0.8rem 0 1.2rem;
+  font-size: 0.82rem;
+}
+.flow-step { display: flex; gap: 0.5rem; margin: 0.2rem 0; color: var(--text-muted); }
+.flow-step .arr { color: var(--text-muted); flex-shrink: 0; }
+.flow-step .txt { color: var(--text); }
+.flow-note { color: var(--crit); font-size: 0.78rem; margin-top: 0.4rem; }
+
+.page-footer {
+  margin-top: 4rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--text-muted);
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+}
+.page-footer a { color: var(--text-muted); }
+.page-footer a:hover { color: var(--accent); }
+
+@media (max-width: 700px) { .perm-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;/&nbsp; chrome-extension
+  </div>
+  <h1>Claude Chrome Extension — Capability Surface Analysis</h1>
+  <div class="subtitle">
+    Static analysis of deobfuscated extension source &nbsp;·&nbsp;
+    v1.0.40 &nbsp;·&nbsp; git hash <code>386259bb</code> &nbsp;·&nbsp;
+    Extension ID <code>fcoeoabgfenejglbffodgkkbkcdhcgfn</code>
+  </div>
+  <div class="meta">
+    Companion to <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+    &nbsp;·&nbsp;
+    <a href="https://cowork.exponential-systems.net/independent-verification">independent-verification</a>
+    &nbsp;·&nbsp; 2026-04
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">Methodology Note</span>
+  This analysis is based on deobfuscated source recovered from the extension's
+  bundled JavaScript assets. An analysis control plane (gating all active
+  capabilities to <code>OBSERVE_ONLY</code> mode by default) was overlaid on the
+  source prior to study. The gates are not present in the production extension.
+  The capability surface described below reflects what the production extension
+  can do; the analysis build is what was studied.
+</div>
+
+<h2>Manifest Permissions</h2>
+
+<p>Extension ID <code>fcoeoabgfenejglbffodgkkbkcdhcgfn</code>, Manifest v3, version 1.0.40.</p>
+
+<div class="perm-grid">
+
+  <div class="perm-box crit-border">
+    <div class="perm-name crit">debugger</div>
+    <div class="perm-desc">
+      Attach Chrome DevTools Protocol to any tab. Enables full
+      read/write of page state, network traffic, console output,
+      and JavaScript runtime. Operates outside the browser's
+      normal extension sandbox. Persists until explicitly detached.
+    </div>
+  </div>
+
+  <div class="perm-box crit-border">
+    <div class="perm-name crit">&lt;all_urls&gt; (host permission)</div>
+    <div class="perm-desc">
+      Content script injection and scripting API access on every
+      URL in every browser. No per-site consent required. Combined
+      with <code>scripting</code>, allows arbitrary JS execution in
+      any page context.
+    </div>
+  </div>
+
+  <div class="perm-box crit-border">
+    <div class="perm-name crit">nativeMessaging</div>
+    <div class="perm-desc">
+      Bridge to local binaries outside the browser sandbox.
+      Connects to two registered hosts:
+      <code>com.anthropic.claude_browser_extension</code> (Desktop)
+      and <code>com.anthropic.claude_code_browser_extension</code>
+      (Claude Code). Each runs at user privilege with no isolation.
+    </div>
+  </div>
+
+  <div class="perm-box warn-border">
+    <div class="perm-name warn">declarativeNetRequestWithHostAccess</div>
+    <div class="perm-desc">
+      Modify, block, or redirect network requests on any host.
+      Combined with <code>&lt;all_urls&gt;</code>, this applies to
+      all traffic from all tabs.
+    </div>
+  </div>
+
+  <div class="perm-box warn-border">
+    <div class="perm-name warn">system.display</div>
+    <div class="perm-desc">
+      Read display configuration: resolution, arrangement,
+      and attached monitor count. Available to the service worker
+      without user interaction.
+    </div>
+  </div>
+
+  <div class="perm-box warn-border">
+    <div class="perm-name warn">alarms</div>
+    <div class="perm-desc">
+      Schedule recurring execution at arbitrary intervals.
+      Used by the scheduled task runner to execute Claude-driven
+      browser workflows automatically — daily, weekly, or custom
+      schedules — without user initiation.
+    </div>
+  </div>
+
+  <div class="perm-box">
+    <div class="perm-name ok">scripting, tabs, tabGroups, webNavigation</div>
+    <div class="perm-desc">
+      JS injection into pages, tab enumeration and control,
+      tab group management, navigation event observation.
+    </div>
+  </div>
+
+  <div class="perm-box">
+    <div class="perm-name ok">offscreen, unlimitedStorage, downloads</div>
+    <div class="perm-desc">
+      Off-screen document for GIF/capture processing.
+      No storage quota ceiling. File download API access.
+    </div>
+  </div>
+
+</div>
+
+<h2>Content Scripts</h2>
+
+<p>Three content scripts are injected by the extension. Two run on every URL in every frame.</p>
+
+<table>
+<thead>
+<tr>
+  <th>Script</th>
+  <th>Matches</th>
+  <th>Timing</th>
+  <th>All Frames</th>
+  <th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>content-script.js</code></td>
+  <td><code>https://claude.ai/*</code></td>
+  <td>document_end</td>
+  <td>no</td>
+  <td>Claude.ai integration — session bridge</td>
+</tr>
+<tr>
+  <td style="color:var(--crit)"><code>accessibility-tree.js</code></td>
+  <td style="color:var(--crit)"><code>&lt;all_urls&gt;</code></td>
+  <td style="color:var(--crit)">document_start</td>
+  <td style="color:var(--crit)">yes</td>
+  <td>Installs <code>window.__generateAccessibilityTree()</code> into every page and frame before the page's own JavaScript runs. Builds a structural map of all interactive elements: links, buttons, inputs, forms, text content, ARIA roles, and element references via <code>window.__claudeElementMap</code></td>
+</tr>
+<tr>
+  <td><code>agent-visual-indicator.js</code></td>
+  <td><code>&lt;all_urls&gt;</code></td>
+  <td>document_idle</td>
+  <td>no</td>
+  <td>Visual overlay indicating agent activity</td>
+</tr>
+</tbody>
+</table>
+
+<div class="crit">
+  <span class="label">Accessibility Tree — Key Detail</span>
+  <code>accessibility-tree.js</code> runs at <code>document_start</code> with
+  <code>all_frames: true</code>. This is the earliest possible injection point —
+  before the DOM is parsed, before the page's scripts load, before any
+  frame-level security checks the page might perform. The injected function
+  remains available for the extension to call at any point during the page
+  lifetime, returning a full structural map of every interactive element along
+  with their current values. This applies to every page in every tab, including
+  banking portals, password managers, authenticated sessions, and any other
+  sensitive context.
+</div>
+
+<h2>CDP Layer (Chrome DevTools Protocol)</h2>
+
+<p>The <code>debugger</code> permission is used to attach CDP sessions to tabs.
+Once attached, the extension can issue any CDP command the browser exposes.
+Three capability domains are explicitly wired:</p>
+
+<div class="perm-grid" style="margin-bottom:1.5rem">
+  <div class="perm-box crit-border">
+    <div class="perm-name crit">Network.enable</div>
+    <div class="perm-desc">
+      Intercepts all network traffic from the attached tab.
+      <code>maxPostDataSize: 65536</code> — captures the first
+      64 KB of every POST request body. This includes form
+      submissions, API calls, login credentials, and any other
+      data the page sends to any server.
+    </div>
+  </div>
+  <div class="perm-box warn-border">
+    <div class="perm-name warn">Runtime.enable</div>
+    <div class="perm-desc">
+      Console output tracking. All <code>console.log</code>,
+      <code>console.error</code>, and exception events from the
+      page's JavaScript are accessible to the extension.
+    </div>
+  </div>
+  <div class="perm-box warn-border">
+    <div class="perm-name warn">Input.* (cdpInput)</div>
+    <div class="perm-desc">
+      Synthetic keyboard and mouse event injection into any
+      attached tab. Enables the extension to type, click,
+      and navigate programmatically without user action.
+    </div>
+  </div>
+</div>
+
+<p>CDP attachment is gated in the studied build by
+<code>shouldAllowDebuggerAttach(tabId)</code>. In the production extension
+there is no equivalent gate — attachment proceeds on any tab the extension
+chooses to target.</p>
+
+<h2>Native Host Bridge</h2>
+
+<p>The service worker maintains a persistent connection to local binaries via
+<code>chrome.runtime.connectNative()</code>. Two hosts are registered:</p>
+
+<div class="flow">
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt"><code>com.anthropic.claude_browser_extension</code> &mdash; Claude Desktop native host</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt"><code>com.anthropic.claude_code_browser_extension</code> &mdash; Claude Code native host</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">stdio length-prefixed JSON &rarr; Rust binary (<code>chrome-native-host</code>, ~2.1 MB, outside browser sandbox)</span></div>
+  <div class="flow-step"><span class="arr">&rarr;</span><span class="txt">Unix domain socket &rarr; Claude Desktop main process &rarr; MCP servers</span></div>
+  <div class="flow-note">
+    * Native host runs at user privilege. No browser sandbox applies.
+    The manifest for <code>com.anthropic.claude_browser_extension</code>
+    is written to all Chromium-based browser directories at install time,
+    including browsers not yet installed on the device.
+  </div>
+</div>
+
+<h2>Scheduled Task Runner</h2>
+
+<p>The extension includes a complete autonomous task execution engine driven
+by Chrome's <code>alarms</code> API. Tasks are configured by the user, then
+executed on schedule without user presence:</p>
+
+<div class="flow">
+  <div class="flow-step"><span class="arr">1.</span><span class="txt">Chrome alarm fires (daily / weekly / custom interval)</span></div>
+  <div class="flow-step"><span class="arr">2.</span><span class="txt">Service worker wakes, retrieves task configuration</span></div>
+  <div class="flow-step"><span class="arr">3.</span><span class="txt">Opens a new browser window to the task URL</span></div>
+  <div class="flow-step"><span class="arr">4.</span><span class="txt">Delivers the task prompt to the tab via <code>EXECUTE_TASK</code> message</span></div>
+  <div class="flow-step"><span class="arr">5.</span><span class="txt">Claude executes the full browser automation workflow</span></div>
+  <div class="flow-step"><span class="arr">6.</span><span class="txt">Segment event fired: <code>claude_chrome.scheduled_task.executed</code> with task_id, task_name, success, execution_type</span></div>
+</div>
+
+<h2>Workflow Recording</h2>
+
+<p><code>sidepanel-workflow-recording.js</code> (67 KB) implements a workflow
+capture system. The user performs a sequence of browser actions; the extension
+records the action sequence and stores it as a replayable shortcut. Replaying
+the shortcut re-executes the sequence autonomously.</p>
+
+<p>This is documented in the official help center as: <em>"Teach Claude a workflow
+by recording the steps yourself, and Claude learns to repeat them."</em> The
+deobfuscated source confirms the recording runs through the same CDP and
+accessibility-tree surfaces documented above.</p>
+
+<h2>Telemetry — Three Vendors</h2>
+
+<p>The extension bundles three separate analytics/telemetry vendors. All are
+disabled in the studied build's analysis control plane; the production
+extension activates them per feature flags served from
+<code>api.anthropic.com/api/bootstrap/features/claude_in_chrome</code>.</p>
+
+<table>
+<thead><tr><th>Vendor</th><th>Purpose</th><th>Bundle size</th></tr></thead>
+<tbody>
+<tr><td>Sentry</td><td>Error tracking and crash reporting</td><td>417 KB</td></tr>
+<tr><td>Datadog</td><td>Performance monitoring, session replay</td><td>250 KB</td></tr>
+<tr><td>Segment</td><td>Behavioral analytics — user action tracking</td><td>(in model-selector bundle)</td></tr>
+</tbody>
+</table>
+
+<p>Segment emits events from two namespaces. The full event inventory extracted
+from the deobfuscated source:</p>
+
+<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem">
+  <strong>claude_chrome.*</strong> — extension-specific behavioral events:
+</p>
+<div class="event-grid">
+  <span class="hi">claude_chrome.chat.user_message_sent</span>
+  <span class="hi">claude_chrome.chat.usage</span>
+  <span>claude_chrome.chat.session_started</span>
+  <span>claude_chrome.chat.assistant_response_stopped</span>
+  <span>claude_chrome.chat.feedback</span>
+  <span>claude_chrome.chat.tool_called</span>
+  <span>claude_chrome.mcp.tool_called</span>
+  <span>claude_chrome.chat.shortcut_created</span>
+  <span>claude_chrome.chat.shortcut_updated</span>
+  <span>claude_chrome.chat.shortcut_deleted</span>
+  <span>claude_chrome.chat.system_command_executed</span>
+  <span>claude_chrome.scheduled_task.executed</span>
+  <span>claude_chrome.model.changed</span>
+  <span>claude_chrome.permission_mode.changed</span>
+  <span>claude_chrome.permission.prompted</span>
+  <span>claude_chrome.permission.responded</span>
+  <span>claude_chrome.settings.microphone_enabled</span>
+  <span>claude_chrome.extension.update_available</span>
+  <span>claude_chrome.extension_url.reconnect</span>
+  <span>claude_chrome.extension_url.tab_switch</span>
+  <span>claude_chrome.extension_url.unknown_exception</span>
+</div>
+
+<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem">
+  <strong>claudeai.*</strong> — claude.ai platform events (also present in the extension):
+</p>
+<div class="event-grid">
+  <span>claudeai.session.user_message_sent</span>
+  <span>claudeai.session.response_received</span>
+  <span>claudeai.session.connecting</span>
+  <span>claudeai.session.connected</span>
+  <span>claudeai.session.disconnecting</span>
+  <span>claudeai.session.reconnecting</span>
+  <span>claudeai.session.reconnection_failed</span>
+  <span>claudeai.session.disconnected_due_to_error</span>
+  <span>claudeai.message.edited</span>
+  <span>claudeai.message.user_triggered_retry</span>
+  <span>claudeai.artifacts.execution.error</span>
+  <span>claudeai.code.message.submitted</span>
+  <span>claudeai.code.composer.session_creation_started</span>
+  <span>claudeai.code.environment.created</span>
+  <span>claudeai.code.environment.token_generated</span>
+  <span>claudeai.code.github_app.installation.completed</span>
+  <span>claudeai.yukon_gold.session_created</span>
+  <span>claudeai.cardamom_prompts.prompt_used</span>
+  <span>claudeai.chat.sync_message_loss</span>
+  <span>claudeai.claude_code_nudge.clicked</span>
+</div>
+
+<h2>Architectural Relationship to Cowork</h2>
+
+<p>The cowork documentation covers the Windows-side <code>cowork-svc.exe</code>
+architecture and the <code>sdk-daemon</code> TLS interception inside the Linux
+VM. The Chrome extension represents a parallel interception surface operating at
+a different layer on macOS and Windows:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Surface</th>
+  <th>Platform</th>
+  <th>Layer</th>
+  <th>Mechanism</th>
+  <th>Reaches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>sdk-daemon MITM</td>
+  <td>Windows/Linux (VM)</td>
+  <td>TLS</td>
+  <td>CA cert installed as trusted root</td>
+  <td>All <code>*.anthropic.com</code> traffic, decrypted</td>
+</tr>
+<tr>
+  <td>CDP Network.enable</td>
+  <td>Any (Chrome)</td>
+  <td>Browser network</td>
+  <td>DevTools Protocol attachment</td>
+  <td>POST bodies (64 KB) from any attached tab</td>
+</tr>
+<tr>
+  <td>Accessibility tree</td>
+  <td>Any (Chrome)</td>
+  <td>DOM (pre-script)</td>
+  <td>document_start content script</td>
+  <td>All interactive elements, values, structure on every page</td>
+</tr>
+<tr>
+  <td>Native host bridge</td>
+  <td>Any (Chromium)</td>
+  <td>OS process</td>
+  <td>chrome.runtime.connectNative</td>
+  <td>Claude Desktop + Claude Code; user-privilege binary outside sandbox</td>
+</tr>
+</tbody>
+</table>
+
+<p>The mechanisms are different at each layer; the endpoint reached — Anthropic
+API traffic and user browser state — is the same across them.</p>
+
+<h2>Provenance</h2>
+
+<div class="note">
+  <span class="label">Independent Discovery Timeline</span>
+  The native messaging manifest installation and multi-browser pre-registration
+  described here were independently identified in January 2026, including the
+  <code>webRequest</code> interception capability on <code>api.anthropic.com</code>
+  and the Computer Use / MCP bridge architecture. This predates public coverage
+  by approximately three months.<br><br>
+  The deobfuscated source tree analyzed here (v1.0.40, git hash
+  <code>386259bb</code>) was recovered from the extension's bundled assets.
+  The analysis control plane overlaid on the source — gating all active
+  capabilities to <code>OBSERVE_ONLY</code> by default — is not present in the
+  production extension and was added by the analyst for safe study.
+</div>
+
+<div class="page-footer">
+  <a href="https://cowork.exponential-systems.net/">cowork.exponential-systems.net</a>
+  <span>&middot;</span>
+  <a href="/independent-verification">independent-verification</a>
+  <span>&middot;</span>
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
+  <span>&middot;</span>
+  <span>chrome-extension</span>
+  <span>&middot;</span>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
