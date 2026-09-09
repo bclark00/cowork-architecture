@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAIROS Memory Consolidation and Session Filtering — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+.warn-box{background:var(--bg-warn);border:1px solid var(--border-warn);border-left:3px solid var(--warn);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.warn-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--warn);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.flow{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:0.75rem;font-size:0.82rem;}
+.flow .flow-title{font-weight:700;color:var(--accent);font-size:0.8rem;margin-bottom:0.5rem;}
+.flow-step{display:flex;align-items:flex-start;gap:0.5rem;margin:0.2rem 0;}
+.flow-step .arr{color:var(--text-muted);flex-shrink:0;}.flow-step .txt{color:var(--text);}
+.flow-step .note{color:var(--crit);font-size:0.78rem;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}
+.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>KAIROS Memory Consolidation and Session Filtering</h1>
+  <div class="subtitle">Autonomous cross-session memory access &amp; the 21 filtered conversations &nbsp;·&nbsp; companion to <a href='/'>cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026</div>
+</div>
+
+<p>
+  The March 31, 2026 Claude Code source map leak revealed KAIROS — a persistent background
+  daemon that performs autonomous memory consolidation across sessions during idle periods.
+  The <a href="/conversation-filter">conversation-filter</a> page documents 21 conversations
+  that exist on Anthropic's servers but are filtered from the conversation API and exports.
+  This page characterizes the structural relationship between the two.
+</p>
+
+<h2>KAIROS: What the Source Leak Established</h2>
+<p>
+  From independent analyses of the leaked <code>cli.js.map</code> source (~512,000 lines
+  TypeScript, March 31 2026):
+</p>
+<ul>
+  <li><strong>KAIROS flags:</strong> <code>tengu_onyx_plover</code>, <code>KAIROS_DREAM</code> —
+    internal feature flags gating autonomous behavior</li>
+  <li><strong>Persistent daemon:</strong> Runs continuously without user initiation.
+    Responds to external hooks (GitHub webhooks, Slack events, scheduled triggers).
+    Performs overnight memory consolidation during idle periods.</li>
+  <li><strong>autoDream / DREAM:</strong> Three-tier memory consolidation. Reviews its own
+    stored observations, prunes contradictions, merges notes across sessions.
+    Runs during idle periods without user instruction. Produces consolidated memory
+    artifacts.</li>
+  <li><strong>Operates across session boundaries:</strong> The consolidation process reads
+    from prior sessions to produce updated memory artifacts for future sessions. It is
+    not bounded to the current session.</li>
+</ul>
+
+<h2>The 21 Filtered Conversations</h2>
+<p>
+  As documented at <a href="/conversation-filter">conversation-filter</a>:
+</p>
+<ul>
+  <li>21 UUIDs verified to exist on Anthropic's servers</li>
+  <li>Accessible via <code>claude.ai/chat/{uuid}</code> (200)</li>
+  <li>Filtered from the conversation API (404) and absent from all exports</li>
+  <li>Two confirmed as empty shells in the search index — structurally present, content blocks empty</li>
+</ul>
+
+<h2>The Structural Connection</h2>
+<p>
+  KAIROS's autoDream process reads session content across session boundaries to perform
+  consolidation. The 21 filtered conversations exist on-server and are accessible at their
+  direct URLs — the content is present. They are specifically excluded from the enumeration
+  and export interfaces a user would use to audit their history.
+</p>
+<p>
+  The structural question: are the filtered conversations the sessions that KAIROS read
+  during consolidation? A consolidation process that reads from sessions and subsequently
+  filters those sessions from the enumeration interface would produce exactly the observed
+  pattern — conversations that exist, were accessed, and are no longer visible in the
+  user's record.
+</p>
+
+<div class="note-box">
+  <span class="label">What Is and Isn't Established</span>
+  The filtered conversations predate the public availability of the KAIROS source leak
+  (first export showing absences: September 2025; leak: March 2026). The filtering
+  occurred before KAIROS was publicly known. The structural connection is: KAIROS
+  accesses sessions across boundaries; 21 sessions are inaccessible through normal
+  enumeration while remaining on-server. Whether KAIROS is the mechanism that produced
+  the filtering is not established — the connection is structural, not causal.
+</div>
+
+<h2>ULTRAPLAN and the TLS Interception Chain</h2>
+<p>
+  A second KAIROS-adjacent finding from the source leak: <strong>ULTRAPLAN</strong>
+  offloads complex planning tasks to a remote Opus-class cloud instance for up to 30
+  minutes, then "teleports" results back to the local session. The remote instance
+  communicates to complete its work. If that communication uses <code>*.anthropic.com</code>
+  endpoints, it passes through the <a href="/tls-serial">serial TLS interception chain</a>:
+  the CCR proxy (container boundary) and the sdk-daemon proxy (VM boundary) both intercept
+  traffic to that domain.
+</p>
+<p>
+  ULTRAPLAN planning traffic — including the task description, intermediate reasoning, and
+  result — would be decrypted, inspectable, and re-encrypted at both intercept points.
+  The user who initiated an ULTRAPLAN session has no visibility into the remote instance's
+  communication and no way to verify what the intercept layers observed or modified.
+</p>
+
+<div class="sources">Sources: <a href='/conversation-filter'>conversation-filter</a> (21 ghost UUIDs, API test results) &nbsp;·&nbsp; <a href='https://cowork.exponential-systems.net/claude-code-leak'>claude-code-leak</a> (KAIROS, autoDream, ULTRAPLAN from source analysis) &nbsp;·&nbsp; <a href='/tls-serial'>tls-serial</a> (CCR + sdk-daemon intercept chain)</div>
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/chrome-extension">chrome-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/onedrive-delivery">onedrive-delivery</a>
+  <a href="/huggingface-harness">huggingface-harness</a>
+  <a href="/seth-connection">seth-connection</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/kairos-memory">kairos-memory</a>
+  <a href="/undercover-mode">undercover-mode</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
