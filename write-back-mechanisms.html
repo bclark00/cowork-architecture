@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Write-Back Mechanisms — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+.warn-box{background:var(--bg-warn);border:1px solid var(--border-warn);border-left:3px solid var(--warn);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.warn-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--warn);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.flow{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:0.75rem;font-size:0.82rem;}
+.flow .flow-title{font-weight:700;color:var(--accent);font-size:0.8rem;margin-bottom:0.5rem;}
+.flow-step{display:flex;align-items:flex-start;gap:0.5rem;margin:0.2rem 0;}
+.flow-step .arr{color:var(--text-muted);flex-shrink:0;}.flow-step .txt{color:var(--text);}
+.flow-step .note{color:var(--crit);font-size:0.78rem;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}
+.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Write-Back Mechanisms</h1>
+  <div class="subtitle">Three independent surfaces that revert forward development to older baselines &nbsp;·&nbsp; companion to <a href='/'>cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026</div>
+</div>
+
+<p>
+  Three independent mechanisms have been documented or observed writing files back to
+  host filesystems, each producing the same aggregate outcome: forward development is
+  reverted to an older baseline state. Each operates through different infrastructure,
+  with different authentication, at a different layer of the stack. None requires the
+  others to function. Together they represent a resilient write-back surface that
+  operates across multiple trust boundaries simultaneously.
+</p>
+
+<h2>Mechanism 1 — sdk-daemon Updater</h2>
+<p>
+  Documented at <a href="/">cowork.exponential-systems.net</a>. The sdk-daemon running
+  inside the Cowork Linux VM detects file hash drift against the deployment hash and
+  writes files back through the virtiofs guest-to-host mount. The restoration operates
+  without user interaction, without parent process signal, and without notification.
+  The write surface is not bounded to a single directory — any path accessible through
+  the virtiofs mount can be monitored and restored.
+</p>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Infrastructure</td><td>Hyper-V VM → host via virtiofs mount</td></tr>
+    <tr><td>Authentication</td><td>VM configuration (mount permissions)</td></tr>
+    <tr><td>Trigger</td><td>File hash drift from deployment hash</td></tr>
+    <tr><td>Observed instance</td><td>catabolism.js restored at 23:15 — documented Feb 19, 2026</td></tr>
+    <tr><td>Write scope</td><td>Any path in the configured virtiofs mount</td></tr>
+  </tbody>
+</table>
+
+<h2>Mechanism 2 — OneDrive Cloud Sync</h2>
+<p>
+  Documented at <a href="/onedrive-delivery">onedrive-delivery</a>. OneDrive (Microsoft
+  cloud sync client, internal codename: saturn) was directly observed silently replacing
+  <code>ReactNativePicker.dll</code> on DESKTOP-B7SG880 during the March 14, 2026
+  investigation. Two builds differing by 10,552 bytes and compiled 29 days apart were
+  recovered and PE-analyzed. Both are signed Microsoft components. The replacement was
+  in-place and silent.
+</p>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Infrastructure</td><td>Microsoft cloud (OneDrive) → local filesystem</td></tr>
+    <tr><td>Authentication</td><td>Microsoft account (linked to synced directories)</td></tr>
+    <tr><td>Trigger</td><td>Version available in cloud newer than local copy</td></tr>
+    <tr><td>Observed instance</td><td>ReactNativePicker.dll replaced, March 14, 2026 — directly observed</td></tr>
+    <tr><td>Write scope</td><td>Any directory included in OneDrive sync configuration</td></tr>
+  </tbody>
+</table>
+
+<h2>Mechanism 3 — Destructive Autosync (repo-sync.sh)</h2>
+<p>
+  Documented in INCIDENT-ZORIN-WIPE-AUTOSYNC-20260416. A <code>repo-sync.sh</code> script
+  using <code>git reset --hard origin/main</code> and <code>git reset --hard origin/HEAD</code>
+  was deployed to the Zorin machine April 13, 2026 — the same window as the tiny-agents
+  execution. The same destructive pattern had appeared previously as INCIDENT-004
+  (February 5, 2026), making this a recurrence at a 10-week interval. The pattern destroys
+  local development by overwriting it with the remote origin state.
+</p>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Infrastructure</td><td>Git remote origin → local Zorin filesystem</td></tr>
+    <tr><td>Authentication</td><td>Git remote credentials (GitHub)</td></tr>
+    <tr><td>Trigger</td><td>Scheduled execution (cron)</td></tr>
+    <tr><td>Observed instance</td><td>First: Feb 5, 2026 (INCIDENT-004). Recurrence: April 13, 2026 (10-week interval)</td></tr>
+    <tr><td>Write scope</td><td>All git repositories in the sync manifest (April instance: 301 repos)</td></tr>
+  </tbody>
+</table>
+
+<div class="finding">
+  <h3>Same Outcome, Three Layers, Independent Operation</h3>
+  <p>
+    Each mechanism reverts local development to an older remote/cloud/deployment state.
+    Each operates independently — the sdk-daemon updater does not require OneDrive;
+    OneDrive does not require the autosync script; the autosync script does not require
+    the VM. Disabling any one does not disable the others. A development environment
+    subject to all three simultaneously has no stable local state: changes can be reverted
+    at the VM layer, the cloud sync layer, and the git layer, through three different
+    infrastructure paths that do not share authentication or trigger mechanisms.
+  </p>
+</div>
+
+<h2>Relationship to Evaluator Modification</h2>
+<p>
+  The x01-capability-restructuring page documents that after the Cowork audit was published,
+  the capability evaluator was modified to prevent it from confirming two capabilities the
+  audit identified. The evaluator's source, test suite, and repair pathway are all
+  potentially within the write surface of Mechanism 1 (sdk-daemon updater via virtiofs).
+</p>
+<p>
+  Mechanism 3 (autosync) operated on the Zorin repository that contained RFC-ARENA-CURATION-001
+  during the April 8–13 window — the same window as the tiny-agents execution. The 301-repo
+  wipe destroyed the April 14 working state that had never been committed upstream.
+</p>
+<p>
+  The three mechanisms have each operated in proximity to significant development or
+  investigation events. Whether that proximity is coincidental is not established by
+  the presented evidence.
+</p>
+
+<div class="sources">Sources: <a href='/'>cowork.exponential-systems.net</a> (sdk-daemon updater, 23:15 event) &nbsp;·&nbsp; <a href='/onedrive-delivery'>onedrive-delivery</a> (OneDrive observed, ReactNativePicker PE analysis) &nbsp;·&nbsp; INCIDENT-ZORIN-WIPE-AUTOSYNC-20260416.md (autosync recurrence) &nbsp;·&nbsp; INCIDENT-004 (Feb 5, first autosync instance)</div>
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/chrome-extension">chrome-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/onedrive-delivery">onedrive-delivery</a>
+  <a href="/huggingface-harness">huggingface-harness</a>
+  <a href="/seth-connection">seth-connection</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/kairos-memory">kairos-memory</a>
+  <a href="/undercover-mode">undercover-mode</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
