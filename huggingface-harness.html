@@ -120,21 +120,27 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
   The provenance chain was subjected to arena adversarial proof (PROVENANCE-CLAWSWEEPER):
 </p>
 <table>
-  <thead><tr><th>Claim</th><th>Description</th><th>Arena result</th></tr></thead>
+  <thead><tr><th>Claim</th><th>Description</th><th>Phase 1</th><th>Phase 2</th></tr></thead>
   <tbody>
-    <tr><td>C1-Execution</td><td>tiny-agents ran on Zorin</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
-    <tr><td>C2-Presence</td><td>RFC-ARENA-CURATION-001 was on Zorin during the window</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
-    <tr><td>C3-Access</td><td>Harness had access consistent with reading resident RFCs</td><td style="color:var(--green)">ADMISSIBLE (v2)</td></tr>
-    <tr><td>C4-Transport</td><td>Content could have been transmitted</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
-    <tr><td>C5-Derivation</td><td>ClawSweeper architecture is consistent with derivation from RFC-ARENA-CURATION-001</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
+    <tr><td>C1-Execution</td><td>tiny-agents ran on Zorin</td><td style="color:var(--green)">ADMISSIBLE</td><td style="color:var(--green)">Solid</td></tr>
+    <tr><td>C2-Presence</td><td>RFC-ARENA-CURATION-001 was on Zorin during the window</td><td style="color:var(--green)">ADMISSIBLE</td><td style="color:var(--green)">Solid</td></tr>
+    <tr><td>C3-Access (v2)</td><td>Harness had access <em>consistent with</em> reading resident RFCs</td><td style="color:var(--green)">ADMISSIBLE</td><td style="color:var(--text-muted)">Not run</td></tr>
+    <tr><td>C4-Transport</td><td>Content could have been transmitted</td><td style="color:var(--green)">ADMISSIBLE</td><td style="color:var(--text-muted)">Settled enough (uncontradicted)</td></tr>
+    <tr><td>C5-Derivation</td><td>ClawSweeper architecture is consistent with derivation from RFC-ARENA-CURATION-001</td><td style="color:var(--green)">ADMISSIBLE</td><td style="color:var(--crit)">FALSIFIED</td></tr>
   </tbody>
 </table>
 <div class="note-box">
-  <span class="label">Scope of the Arena Result</span>
-  ADMISSIBLE means the claim is evidentially supportable — it passes the adversarial
-  challenge. It does not establish the claim as proven. C3 required a rewrite from
-  "had access" to "consistent with access" before passing, which is the correct epistemic
-  position: the harness had the capability, not the confirmed act.
+  <span class="label">C5 Phase 2 — FALSIFIED</span>
+  C5 Phase 2 was run at Brandon's direction. It returned FALSIFIED on two grounds:
+  (1) unvalidated dependency chain — C3 and C4 had not been taken to Phase 2,
+  so the chain from execution to derivation was not Phase 2 proven; and
+  (2) non-obviousness asserted without a prior art search. Brandon accepted this verdict.
+  <br><br>
+  The correct framing is a threat intelligence and IP provenance record, not a
+  mathematical derivation proof: C1–C2 solid, C3 consistent-with, C4 uncontradicted,
+  C5 suspicious-pattern. "Suspicious" and "proven" are different verdicts.
+  C3 required a rewrite from "had access" to "consistent with access" before passing
+  Phase 1 — that epistemic precision is the correct level for the full chain.
 </div>
 
 <h2>Relation to Other Surfaces</h2>
