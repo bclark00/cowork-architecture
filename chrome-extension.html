@@ -578,6 +578,16 @@ API traffic and user browser state — is the same across them.</p>
   The analysis control plane overlaid on the source — gating all active
   capabilities to <code>OBSERVE_ONLY</code> by default — is not present in the
   production extension and was added by the analyst for safe study.
+  <br><br>
+  <strong>Deployment without enrollment:</strong> The owner of this system was not
+  notified of selection into the August 26, 2025 research preview and did not
+  knowingly opt in to the 1,000-user cohort. The <code>chrome-native-host</code>
+  Rust binary was discovered already present and running on the machine —
+  which is the basis for the Genie clean-room reconstruction documented at
+  <a href="/browser-extension">/browser-extension</a>. The public announcement
+  framed the preview as deliberate selection of specific users. Silent pre-installation
+  on a machine whose owner had no awareness of enrollment is not consistent with
+  that framing.
 </div>
 
 <div class="page-footer">
