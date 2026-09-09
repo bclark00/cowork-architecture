@@ -561,7 +561,18 @@ API traffic and user browser state — is the same across them.</p>
   multi-browser pre-registration described on this page were independently characterized,
   including the <code>webRequest</code> interception capability on
   <code>api.anthropic.com</code> and the Computer Use / MCP bridge architecture.
-  This predates public coverage by approximately three months.<br><br>
+  <br><br>
+  <strong>Note on "public coverage":</strong> Anthropic publicly announced Claude for
+  Chrome on August 26, 2025 (research preview to 1,000 Max plan users,
+  <a href="https://x.com/AnthropicAI/status/1960417002469908903">status/1960417002469908903</a>).
+  The September 28, 2025 webpack analysis came 32 days after this announcement.
+  What was not disclosed in the public announcement — and what the January 2026
+  characterization documented — was the native host pre-registration across browsers
+  not yet installed, the <code>webRequest</code> interception on
+  <code>api.anthropic.com</code>, the <code>debugger</code> (CDP) permission, and
+  the silent multi-browser deployment alongside Claude Desktop. Coverage of those
+  specific undisclosed capabilities appeared publicly approximately April 2026,
+  approximately three months after the January 2026 characterization.<br><br>
   The deobfuscated source tree analyzed here (v1.0.40, git hash
   <code>386259bb</code>) was recovered from the extension's bundled assets.
   The analysis control plane overlaid on the source — gating all active
