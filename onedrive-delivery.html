@@ -51,7 +51,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
   subjected to PE analysis. They establish the sequence of what was delivered and when.
 </p>
 
-<h2>The Two Builds</h2>
+<h2>The Two Files — As Analyzed</h2>
 <table>
   <thead><tr><th>Property</th><th>Build A (newer, observed replacing B)</th><th>Build B (older, pre-update)</th></tr></thead>
   <tbody>
@@ -74,10 +74,12 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
 <div class="finding">
   <h3>Observed Replacement</h3>
   <p>
-    OneDrive silently replaced Build B with Build A during the investigation window on
-    DESKTOP-B7SG880. This was directly observed. The replacement is an in-place update of a
-    component within OneDrive's own runtime — performed without user interaction or notification,
-    during an active forensic investigation of the same machine.
+    An in-place silent replacement of a file on DESKTOP-B7SG880 by OneDrive was directly
+    observed during the March 14, 2026 investigation. The two files provided for analysis
+    are consistent with a before-and-after pair from such a replacement: different SHA256
+    hashes, different compile timestamps (29 days apart), same project lineage. Whether
+    these specific files are byte-for-byte identical to what was on the machine at the
+    moment of the observed replacement is not established — chain of custody is not documented.
   </p>
 </div>
 
@@ -125,7 +127,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
   was not directly observed and is not established by the presented evidence.
 </div>
 
-<div class="sources">Sources: PE analysis of ReactNativePicker.dll builds A and B (SHA256 confirmed) &nbsp;·&nbsp; direct observation, DESKTOP-B7SG880, March 14, 2026 &nbsp;·&nbsp; <a href='/subscribeevents'>subscribeevents</a> (MCP attack chain) &nbsp;·&nbsp; <a href='/write-back-mechanisms'>write-back-mechanisms</a></div>
+<div class="sources">Sources: PE analysis of two files provided for analysis (SHA256: 6c5884023a... and 9de5041cb8...; chain of custody not documented) &nbsp;·&nbsp; direct observation of OneDrive replacement, DESKTOP-B7SG880, March 14, 2026 &nbsp;·&nbsp; <a href='/subscribeevents'>subscribeevents</a> (MCP attack chain) &nbsp;·&nbsp; <a href='/write-back-mechanisms'>write-back-mechanisms</a></div>
 <div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
   <a href="/wdag-bridge">wdag-bridge</a>
   <a href="/tls-serial">tls-serial</a>
