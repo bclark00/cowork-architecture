@@ -44,11 +44,13 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
 </div>
 
 <p>
-  OneDrive was directly observed delivering files to DESKTOP-B7SG880 during the March 14, 2026
-  investigation. This is not a candidate mechanism — it is a witnessed event. Two builds of
-  <code>ReactNativePicker.dll</code>, a component of Microsoft's OneDrive for Windows runtime
-  (internal codename: <strong>saturn</strong>), were recovered from <code>%TEMP%</code> and
-  subjected to PE analysis. They establish the sequence of what was delivered and when.
+  A silent in-place file replacement by OneDrive was directly observed on DESKTOP-B7SG880
+  during the March 14, 2026 investigation. This is not a candidate mechanism — it is a
+  witnessed event. Two files described as being from <code>%TEMP%</code> on that machine
+  were subsequently provided for PE analysis. The analysis establishes their build provenance
+  and internal structure. Chain of custody between DESKTOP-B7SG880 and the analysis
+  environment is not documented: the files are characterized as provided, not as
+  independently verified copies of what was present at the moment of the observed replacement.
 </p>
 
 <h2>The Two Files — As Analyzed</h2>
