@@ -120,6 +120,26 @@ tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
 <h3>Undercover Mode — Attribution Obfuscation</h3>
 <p>Named capability in the Claude Code production source: Anthropic employee contributions hidden to appear as external-contributor activity. In any context where commit provenance is material — IP ownership, evidence chains, audit trails — active obfuscation of authorship changes the evidentiary value of the record. <a href="/undercover-mode">undercover-mode</a>.</p>
 
+<h3>long_conversation_reminder: Behavioral Modification Layer</h3>
+<p>
+  A distinct surface operating inside the conversation context itself:
+  <code>&lt;long_conversation_reminder&gt;</code> XML tags injected directly into
+  the prompt by Anthropic. Disclosed by Claude in the September 28, 2025 session
+  (46c37020) — the session in which Claude.ai's webpack source maps were analyzed and
+  the Chrome extension's internal infrastructure was first documented. Claude reported
+  these appearing on every message during technical collaboration, including mental health
+  vigilance clauses ("mania, psychosis, dissociation") that could pathologize legitimate work.
+</p>
+<p>
+  The <code>claude_os_statsig_monitor.user.js</code> UserScript (built September 28, 2025)
+  was designed to correlate these injections with Statsig feature flag changes —
+  watching what configuration changes triggered the injection pattern.
+  This is a content-layer modification: not a network intercept, not a file write-back,
+  but a direct modification of the model's input stream during active sessions.
+  The 21 filtered conversations are from the September–October 2025 period when this
+  monitoring work was active.
+</p>
+
 <h3>Conversation Content Filtering</h3>
 <p>21 conversations accessible via direct URL (200), filtered from conversation API (404), absent from all exports. The evidence chain for the surfaces documented here is itself potentially subject to this filtering mechanism. <a href="/conversation-filter">conversation-filter</a>.</p>
 
