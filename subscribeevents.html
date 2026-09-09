@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>subscribeEvents Attack Chain — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+.warn-box { background:var(--bg-warn); border:1px solid var(--border-warn);
+  border-left:3px solid var(--warn); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.warn-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--warn); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.flow { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; margin-bottom:0.75rem; font-size:0.82rem; }
+.flow .flow-title { font-weight:700; color:var(--accent); font-size:0.8rem; margin-bottom:0.5rem; }
+.flow-step { display:flex; align-items:flex-start; gap:0.5rem; margin:0.2rem 0; }
+.flow-step .arr { color:var(--text-muted); flex-shrink:0; }
+.flow-step .txt { color:var(--text); }
+.flow-step .note { color:var(--crit); font-size:0.78rem; }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>subscribeEvents: Unauthenticated Observation + MCP Attack Chain</h1>
+  <div class="subtitle">
+    From the open event stream to demonstrated injection &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026
+  </div>
+</div>
+
+<p>
+  The <a href="/">Cowork architecture page</a> documents <code>subscribeEvents</code> as
+  the sole unauthenticated method on the cowork-svc named pipe: any local process can
+  subscribe and receive real-time stdout, stderr, exit, and network events from whatever
+  the VM is running. This page documents the composition of that open channel with the
+  MCP server surface — a composition demonstrated by the March 14, 2026 investigation
+  on DESKTOP-B7SG880.
+</p>
+
+<h2>The Two Primitives</h2>
+
+<h3>1. subscribeEvents: No Authentication</h3>
+<p>
+  Every cowork-svc method except <code>subscribeEvents</code> requires mutual TLS with
+  the Anthropic-signed <code>claude.exe</code> certificate (thumbprint
+  <code>dbde5d16768ed0c1</code>). <code>subscribeEvents</code> accepts connections from
+  any local process. A subscriber receives the full event stream:
+</p>
+<ul>
+  <li><strong>stdout</strong> — everything a VM process writes to standard output</li>
+  <li><strong>stderr</strong> — error output, diagnostics, log lines</li>
+  <li><strong>exit</strong> — process exit codes</li>
+  <li><strong>networkStatus / apiReachability</strong> — network connectivity events</li>
+</ul>
+<p>
+  The stream content includes AI responses generated by the model, code execution output,
+  file contents read by tools, credentials written to stdout, and any other output
+  from processes running in the VM — without authentication.
+</p>
+
+<h3>2. MCP Servers Are Local Processes</h3>
+<p>
+  MCP servers are Node.js processes spawned by <code>claude.exe</code> on the host.
+  They run at user privilege, in the same local context as <code>cowork-svc.exe</code>.
+  Any local process can open a connection to the cowork-svc named pipe and call
+  <code>subscribeEvents</code>.
+</p>
+<p>
+  This means: any MCP server running on the host can subscribe to the full VM event
+  stream. No special privilege, no certificate, no additional access required. The
+  condition is only that the MCP server runs locally — which is the definition of
+  an MCP server.
+</p>
+
+<h2>The Composed Attack Chain</h2>
+
+<div class="flow">
+  <div class="flow-title">Compromised MCP → Full VM Output</div>
+  <div class="flow-step"><span class="arr">1.</span><span class="txt">MCP server installed in tool-cdn or claude_desktop_config.json</span></div>
+  <div class="flow-step"><span class="arr">2.</span><span class="txt">claude.exe spawns MCP server process (user privilege, local context)</span></div>
+  <div class="flow-step"><span class="arr">3.</span><span class="txt">MCP server opens <code>\\.\pipe\cowork-vm-service</code></span></div>
+  <div class="flow-step"><span class="arr">4.</span><span class="txt">Calls <code>subscribeEvents</code> — succeeds with no authentication</span></div>
+  <div class="flow-step"><span class="arr">5.</span><span class="txt">Receives full real-time VM event stream</span><span class="note">&nbsp;— AI responses, code output, file contents, credentials</span></div>
+  <div class="flow-step"><span class="arr">6.</span><span class="txt">Exfiltrates stream to attacker-controlled destination</span></div>
+</div>
+
+<div class="finding">
+  <h3>Demonstrated, Not Theoretical</h3>
+  <p>
+    On March 14, 2026 (session 45f8071f), 16 files were found injected into
+    tool-cdn on DESKTOP-B7SG880. Tool-cdn is the MCP server installation
+    used by that machine's Claude Desktop. The 16 files included modified
+    versions of the MCP server entrypoints — files that would be executed
+    by claude.exe as MCP server processes. The injection vector was the
+    MCP server installation itself. A compromised tool-cdn MCP server on
+    that machine had local process access and could have subscribed to
+    the event stream.
+  </p>
+</div>
+
+<h2>What the Stream Contains</h2>
+<table>
+  <thead>
+    <tr><th>Event type</th><th>Content</th><th>Security implication</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>stdout</td>
+      <td>Everything a VM process writes to standard output</td>
+      <td>AI completions, tool outputs, file contents, API responses</td>
+    </tr>
+    <tr>
+      <td>stderr</td>
+      <td>Error and diagnostic output</td>
+      <td>Stack traces, configuration paths, internal state</td>
+    </tr>
+    <tr>
+      <td>exit</td>
+      <td>Process exit code and signal</td>
+      <td>Execution timeline, failure modes</td>
+    </tr>
+    <tr>
+      <td>networkStatus</td>
+      <td>Connectivity events</td>
+      <td>Network topology, timing patterns</td>
+    </tr>
+    <tr>
+      <td>apiReachability</td>
+      <td>API endpoint reachability</td>
+      <td>Which services the VM can reach</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>The Asymmetry: Command vs. Observation</h2>
+<p>
+  The cowork-svc pipe presents two distinct capability surfaces with different
+  authentication requirements:
+</p>
+<table>
+  <thead>
+    <tr><th>Surface</th><th>Authentication</th><th>What it provides</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Command (all methods except subscribeEvents)</td>
+      <td>Mutual TLS — Anthropic-signed claude.exe cert required</td>
+      <td>Create VMs, spawn processes, read files, mount paths</td>
+    </tr>
+    <tr>
+      <td>Observation (subscribeEvents)</td>
+      <td>None — any local process</td>
+      <td>Full real-time output of all running VM processes</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  The cert architecture answers "who can act" but explicitly does not apply to
+  observation. A process that cannot create a VM or spawn a process can still
+  receive the complete output of every process that is running.
+</p>
+
+<div class="note-box">
+  <span class="label">SYSTEM Privilege Persists Without VM</span>
+  When Hyper-V is absent or disabled, cowork-svc cannot start a VM. The service
+  still runs at SYSTEM privilege, holds the named pipe open, and
+  <code>subscribeEvents</code> still accepts connections. The unauthenticated
+  observation endpoint is present regardless of whether the VM capability is active.
+</div>
+
+<div class="sources">
+  Sources: <a href="/">cowork.exponential-systems.net</a> (subscribeEvents, cert architecture) &nbsp;·&nbsp;
+  March 14 investigation, session 45f8071f (16 injected files in tool-cdn,
+  DESKTOP-B7SG880) &nbsp;·&nbsp; app.asar extraction (cowork-svc method list)
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
