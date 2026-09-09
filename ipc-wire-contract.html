@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPC Wire Contract — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>IPC Wire Contract</h1>
+  <div class="subtitle">
+    Shared protocol between governed and ungoverned Win32 bridge implementations &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026
+  </div>
+</div>
+
+<p>
+  The Win32 bridge found running on the investigation machine (documented at
+  <a href="/wdag-bridge">wdag-bridge</a>) and the clean-room reconstruction
+  (<code>Genesis.Phantom</code>) share an IPC contract. A subsequent implementation,
+  <code>autoShell</code>, was built using the same contract with the surveillance
+  and injection capabilities replaced by a typed action schema.
+  The contract is an independent interoperability surface: any implementation
+  that speaks it can communicate with any other — governed or ungoverned,
+  original or reconstruction.
+</p>
+
+<h2>Contract Characterization</h2>
+<p>
+  The IPC wire contract was characterized as part of the July 31, 2026 capability
+  classification session (session 91b1185c), which compared <code>Phantom_fresh.zip</code>
+  against the <code>autoShell</code> implementation:
+</p>
+<div class="note-box">
+  <span class="label">Primary Source</span>
+  "autoShell is Phantom's <code>win32-bridge.exe</code> with the surveillance and
+  injection P/Invoke surface removed and replaced by a governed typed action schema —
+  same IPC contract character for character, same dispatch pattern, same wire format,
+  different capability surface. The distance between them is not architectural.
+  It's a P/Invoke import list."
+</div>
+<p>
+  Three properties are identical across implementations:
+</p>
+<ul>
+  <li><strong>IPC contract</strong> — the framing, message structure, and session protocol are identical</li>
+  <li><strong>Dispatch pattern</strong> — how requests are routed to handlers is identical</li>
+  <li><strong>Wire format</strong> — the byte layout of messages on the pipe is identical</li>
+</ul>
+<p>
+  What differs is the P/Invoke import list — the Win32 functions called once a
+  dispatch reaches a handler. In the original and Phantom, these include UIAutomation,
+  <code>SendMessage</code>/<code>PostMessage</code>, and HvSocket functions. In autoShell,
+  these are replaced by typed action handlers (audio, network, Bluetooth, theme,
+  wallpaper, service management, screen resolution, virtual desktops) behind
+  <code>IActionHandler</code> interfaces.
+</p>
+
+<h2>The Interoperability Surface</h2>
+
+<div class="finding">
+  <h3>Wire Format as Capability Gate</h3>
+  <p>
+    Because the wire format is identical, any client that can speak the protocol can
+    connect to either a governed (autoShell) or ungoverned (Phantom / original)
+    endpoint. Authentication is at the transport level — the pipe — not at the
+    protocol level. A process that has pipe access and speaks the contract can
+    invoke whatever capability the listening implementation exposes, without
+    distinguishing which implementation is running.
+  </p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Implementation</th>
+      <th>Wire format</th>
+      <th>Dispatch pattern</th>
+      <th>Capability surface</th>
+      <th>Auth</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Original (found deployed)</td>
+      <td>Identical</td>
+      <td>Identical</td>
+      <td>UIAutomation, SendMessage, HvSocket, WDAGBridge</td>
+      <td>Pipe ACL</td>
+    </tr>
+    <tr>
+      <td>Genesis.Phantom (reconstruction)</td>
+      <td>Identical</td>
+      <td>Identical</td>
+      <td>Same as original — clean-room reimplementation</td>
+      <td>Pipe ACL</td>
+    </tr>
+    <tr>
+      <td>autoShell (governed)</td>
+      <td>Identical</td>
+      <td>Identical</td>
+      <td>Typed action schema — IActionHandler interfaces, no raw P/Invoke</td>
+      <td>Pipe ACL</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>win32-bridge.zip Relationship</h2>
+<p>
+  The <code>win32-bridge.zip</code> analyzed in session 06a5ab87 used the same contract.
+  Six files were byte-for-byte identical to Phantom. The modifications removed
+  only the WDAG/HvSocket capability layer — the wire format, dispatch pattern, and
+  core P/Invoke surface (UIAutomation, message injection, isolated desktop) were retained.
+  A client speaking the contract against win32-bridge.zip would receive the same
+  protocol responses as against Phantom for the retained capabilities.
+</p>
+
+<h2>Governance Boundary</h2>
+<p>
+  The autoShell implementation demonstrates that governance of the Win32 bridge
+  surface is achievable: the contract is preserved, the dispatch layer is preserved,
+  and the capability surface is constrained at the handler layer. This is the design
+  of <code>Genesis.Phantom</code> — the <code>IActionHandler</code> interface boundary
+  separates the transport (shared contract) from the capability (implementation-defined).
+</p>
+<p>
+  The governance boundary holds only if the implementation running behind the pipe
+  is the governed one. The contract itself provides no governance signal: a client
+  cannot distinguish, from the wire format alone, whether it is talking to autoShell
+  or to the original ungoverned implementation.
+</p>
+
+<div class="sources">
+  Sources: session 91b1185c (2026-07-31) — Phantom_fresh.zip / autoShell capability
+  classification &nbsp;·&nbsp;
+  <a href="/wdag-bridge">wdag-bridge</a> — original bridge discovery and Phantom reconstruction &nbsp;·&nbsp;
+  session 06a5ab87 (2026-09-03) — win32-bridge.zip forensic comparison
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
