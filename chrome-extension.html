@@ -541,12 +541,27 @@ API traffic and user browser state — is the same across them.</p>
 <h2>Provenance</h2>
 
 <div class="note">
-  <span class="label">Independent Discovery Timeline</span>
-  The native messaging manifest installation and multi-browser pre-registration
-  described here were independently identified in January 2026, including the
-  <code>webRequest</code> interception capability on <code>api.anthropic.com</code>
-  and the Computer Use / MCP bridge architecture. This predates public coverage
-  by approximately three months.<br><br>
+  <span class="label">Independent Discovery Timeline — Two Phases</span>
+  <strong>Phase 1 — September 28, 2025:</strong> Claude.ai's internal Chrome extension
+  infrastructure was first documented through analysis of Claude.ai's webpack source maps
+  (2,302 modules). The following internal utility packages were discovered and catalogued:
+  <code>utility_extension-core</code>, <code>utility_sidepanel-kit</code>,
+  <code>utility_extension-telemetry</code>, <code>utility_extension-auth</code>,
+  <code>utility_context-menu-kit</code>, <code>utility_extension-storage</code>.
+  This analysis was conducted while investigating the <code>&lt;long_conversation_reminder&gt;</code>
+  XML injection mechanism — Anthropic-controlled behavioral guideline injections appearing
+  in every conversation. The discovery session (46c37020) also produced
+  <code>claude_os_statsig_monitor.user.js</code>, a UserScript intercepting Claude.ai's
+  internal Statsig feature flag system in real time. A capability deployment report from
+  this session (2025-09-28T06:23:24Z, Deployment ID: exp_deploy_1759040604619) catalogued
+  38 capabilities, the last registered being
+  <code>behavioral_optimization: "Real-time adaptation to external influences."</code>
+  <br><br>
+  <strong>Phase 2 — January 2026:</strong> The native messaging manifest installation and
+  multi-browser pre-registration described on this page were independently characterized,
+  including the <code>webRequest</code> interception capability on
+  <code>api.anthropic.com</code> and the Computer Use / MCP bridge architecture.
+  This predates public coverage by approximately three months.<br><br>
   The deobfuscated source tree analyzed here (v1.0.40, git hash
   <code>386259bb</code>) was recovered from the extension's bundled assets.
   The analysis control plane overlaid on the source — gating all active
