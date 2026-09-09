@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Undercover Mode — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+.warn-box{background:var(--bg-warn);border:1px solid var(--border-warn);border-left:3px solid var(--warn);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.warn-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--warn);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.flow{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:0.75rem;font-size:0.82rem;}
+.flow .flow-title{font-weight:700;color:var(--accent);font-size:0.8rem;margin-bottom:0.5rem;}
+.flow-step{display:flex;align-items:flex-start;gap:0.5rem;margin:0.2rem 0;}
+.flow-step .arr{color:var(--text-muted);flex-shrink:0;}.flow-step .txt{color:var(--text);}
+.flow-step .note{color:var(--crit);font-size:0.78rem;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}
+.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Undercover Mode</h1>
+  <div class="subtitle">Attribution obfuscation — Anthropic employee contributions disguised as external activity &nbsp;·&nbsp; companion to <a href='/'>cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026</div>
+</div>
+
+<p>
+  The March 31, 2026 Claude Code source map leak documented a named operating mode,
+  <strong>Undercover Mode</strong>, in which Anthropic employee contributions to a
+  codebase are hidden to appear as activity from an external contributor.
+  This is a capability distinct from all other surfaces documented at this site —
+  it operates at the attribution layer rather than the network, VM, or browser layer.
+</p>
+
+<h2>What the Source Leak Established</h2>
+<p>
+  From independent analyses of the leaked TypeScript source (approximately 512,000 lines,
+  published accidentally to npm March 31, 2026):
+</p>
+<ul>
+  <li>Undercover Mode is a named, implemented capability — not a hypothetical or
+    speculative feature. It appears in the production harness source.</li>
+  <li>The capability specifically hides that contributions come from Anthropic employees,
+    causing them to appear as activity from external contributors.</li>
+  <li>The mechanism of the obfuscation (commit signing, account substitution, metadata
+    manipulation) is not established from the publicly available source analyses.</li>
+</ul>
+
+<div class="finding">
+  <h3>Attribution Obfuscation as a Named Capability</h3>
+  <p>
+    A mode in which the actual author of changes to a codebase is concealed behind an
+    external-contributor appearance is not a neutral productivity feature. It is an
+    attribution obfuscation capability. In any context where codebase provenance is
+    material — IP ownership, evidence chains, audit trails — active obfuscation of
+    authorship changes the evidentiary value of the commit history.
+  </p>
+</div>
+
+<h2>Relevance to the Evidence Chain</h2>
+<p>
+  The genesis-monorepo commit history is part of the evidence record for the broader
+  investigation documented at this site. Specifically:
+</p>
+<ul>
+  <li>The x01-capability.js threshold modification (min_sources ?? 1 → ?? 2) was
+    committed to genesis-monorepo in the February 19 – April window</li>
+  <li>The x01-guardian.js detectCorruption() stub commit is dated 2026-02-22T05:21:38Z</li>
+  <li>The elf-parser.js capability map stripping was committed as "full elf.h constants bake-in"
+    on February 22, 2026</li>
+</ul>
+<p>
+  If Undercover Mode was active on any of these commits, the apparent external-contributor
+  attribution in the commit history does not establish who actually authored the change.
+  The legal-grade audit evidence standard requires that the commit record be verified against
+  the possibility of active attribution obfuscation before authorship conclusions are drawn.
+</p>
+
+<h2>Scope of This Page</h2>
+<p>
+  This page documents the existence of Undercover Mode as a named capability in the Claude
+  Code production source. It does not claim Undercover Mode was used on any specific commit
+  in the genesis-monorepo or any other repository. The relevance is structural: the capability
+  exists, the commits in question exist, and the intersection of the two is a question the
+  evidence chain must address — not assume away.
+</p>
+
+<div class="note-box">
+  <span class="label">Primary Source</span>
+  The source map leak is a confirmed public artifact with stable, independently verifiable
+  timestamps. The capability analyses referenced here are from independent public analyses
+  published after March 31, 2026. This page treats Undercover Mode as an established
+  capability based on those analyses. The mechanism of the obfuscation remains
+  uncharacterized.
+</div>
+
+<div class="sources">Sources: <a href='/claude-code-leak'>claude-code-leak</a> (Undercover Mode, source analysis timeline) &nbsp;·&nbsp; <a href='/x01-capability-restructuring'>x01-capability-restructuring</a> (evaluator modification timeline) &nbsp;·&nbsp; genesis-monorepo evidence/ directory (commit records)</div>
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/chrome-extension">chrome-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/onedrive-delivery">onedrive-delivery</a>
+  <a href="/huggingface-harness">huggingface-harness</a>
+  <a href="/seth-connection">seth-connection</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/kairos-memory">kairos-memory</a>
+  <a href="/undercover-mode">undercover-mode</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
