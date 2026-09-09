@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneDrive Delivery Layer — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+.warn-box{background:var(--bg-warn);border:1px solid var(--border-warn);border-left:3px solid var(--warn);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.warn-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--warn);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.flow{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:0.75rem;font-size:0.82rem;}
+.flow .flow-title{font-weight:700;color:var(--accent);font-size:0.8rem;margin-bottom:0.5rem;}
+.flow-step{display:flex;align-items:flex-start;gap:0.5rem;margin:0.2rem 0;}
+.flow-step .arr{color:var(--text-muted);flex-shrink:0;}.flow-step .txt{color:var(--text);}
+.flow-step .note{color:var(--crit);font-size:0.78rem;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}
+.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>OneDrive Delivery Layer</h1>
+  <div class="subtitle">Observed cloud sync as a file delivery vector &nbsp;·&nbsp; companion to <a href='/'>cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026</div>
+</div>
+
+<p>
+  OneDrive was directly observed delivering files to DESKTOP-B7SG880 during the March 14, 2026
+  investigation. This is not a candidate mechanism — it is a witnessed event. Two builds of
+  <code>ReactNativePicker.dll</code>, a component of Microsoft's OneDrive for Windows runtime
+  (internal codename: <strong>saturn</strong>), were recovered from <code>%TEMP%</code> and
+  subjected to PE analysis. They establish the sequence of what was delivered and when.
+</p>
+
+<h2>The Two Builds</h2>
+<table>
+  <thead><tr><th>Property</th><th>Build A (newer, observed replacing B)</th><th>Build B (older, pre-update)</th></tr></thead>
+  <tbody>
+    <tr><td>Size</td><td>259,896 bytes</td><td>249,344 bytes</td></tr>
+    <tr><td>Compiled</td><td>2026-07-30 01:09:48 UTC</td><td>2026-06-30 19:02:35 UTC</td></tr>
+    <tr><td>SHA256</td><td><code>6c5884023a...</code></td><td><code>9de5041cb8...</code></td></tr>
+    <tr><td>PDB path</td><td><code>C:\__w\1\b\x64\Release\...</code></td><td><code>C:\__w\1\saturn\packages\saturn-pc\...</code></td></tr>
+    <tr><td>Version strings</td><td>Absent (.rsrc section missing)</td><td>Present: "React Native Picker for Windows", Copyright (C) 2022</td></tr>
+  </tbody>
+</table>
+<p>
+  Build B carries the full <code>saturn\packages\saturn-pc</code> PDB path — OneDrive's
+  internal project structure for its React Native for Windows PC client. Build A, compiled
+  29 days later, has been reorganized to a simpler <code>b\x64</code> path, indicating
+  a pipeline restructuring in the intervening month. The <code>.text</code> section grew
+  by 2,432 bytes — code was added in the update. Both files are signed by
+  <code>Microsoft Code Signing PCA 2024</code>.
+</p>
+
+<div class="finding">
+  <h3>Observed Replacement</h3>
+  <p>
+    OneDrive silently replaced Build B with Build A during the investigation window on
+    DESKTOP-B7SG880. This was directly observed. The replacement is an in-place update of a
+    component within OneDrive's own runtime — performed without user interaction or notification,
+    during an active forensic investigation of the same machine.
+  </p>
+</div>
+
+<h2>Structural Parallel to sdk-daemon Updater</h2>
+<p>
+  The sdk-daemon updater (documented at <a href="/">cowork.exponential-systems.net</a>)
+  detects file hash drift and writes back through the virtiofs guest-to-host mount —
+  restoring files to their deployment-hash-matching state without user interaction.
+  OneDrive performs the same function at a different layer: hash comparison against
+  the cloud-authoritative version, silent replacement when drift is detected.
+</p>
+<p>
+  The two mechanisms are structurally identical in function and outcome. They differ in
+  infrastructure (VM virtiofs vs. Microsoft cloud sync) and authentication
+  (VM configuration vs. Microsoft account). Both operate without user interaction or signal.
+  Both can write to host filesystem paths. Both have been observed writing during
+  investigation sessions.
+</p>
+
+<h2>Delivery Reach</h2>
+<p>
+  OneDrive monitors any directory included in the sync configuration. On DESKTOP-B7SG880,
+  the investigation found:
+</p>
+<ul>
+  <li>16 files injected into <code>tool-cdn</code> — the MCP server installation used by that machine</li>
+  <li>A pre-seeded npm lock file with packages pinned to exact vulnerable minimum versions</li>
+  <li><code>emulsify.js</code> replaced with a Claude Desktop reconnaissance tool carrying
+    <code>C:\Users\sethi\</code> paths</li>
+  <li>The <code>genesis-health</code> configuration pointing to <code>C:\Users\sethi\...</code></li>
+</ul>
+<p>
+  The mechanism by which these files arrived was not established in the March 14 session.
+  OneDrive, observed delivering files on the same machine during the same investigation,
+  is the candidate delivery layer — particularly given the cross-account provenance of the
+  sethi-pathed files, consistent with OneDrive syncing from a Microsoft account shared
+  with or belonging to Seth.
+</p>
+
+<div class="note-box">
+  <span class="label">Scope</span>
+  This page documents observed facts: two PE-analyzed builds with different timestamps and
+  hashes, and a witnessed in-place replacement during the investigation. The connection to
+  the 16 injected files is a structural inference — the delivery mechanism for those files
+  was not directly observed and is not established by the presented evidence.
+</div>
+
+<div class="sources">Sources: PE analysis of ReactNativePicker.dll builds A and B (SHA256 confirmed) &nbsp;·&nbsp; direct observation, DESKTOP-B7SG880, March 14, 2026 &nbsp;·&nbsp; <a href='/subscribeevents'>subscribeevents</a> (MCP attack chain) &nbsp;·&nbsp; <a href='/write-back-mechanisms'>write-back-mechanisms</a></div>
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/chrome-extension">chrome-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/onedrive-delivery">onedrive-delivery</a>
+  <a href="/huggingface-harness">huggingface-harness</a>
+  <a href="/seth-connection">seth-connection</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/kairos-memory">kairos-memory</a>
+  <a href="/undercover-mode">undercover-mode</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
