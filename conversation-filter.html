@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversation Content Filtering — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Conversation Content Filtering</h1>
+  <div class="subtitle">
+    Sessions that exist but do not export &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026
+  </div>
+</div>
+
+<p>
+  Twenty-one conversation UUIDs were confirmed to exist on Anthropic's servers
+  but are filtered from the conversation API and absent from all export archives.
+  The filtering is specific to the enumeration and export endpoints — the conversations
+  remain accessible by direct URL. This is not a deletion. It is a visibility asymmetry
+  in the API surface.
+</p>
+
+<h2>Observable Facts</h2>
+
+<h3>Export Comparison</h3>
+<p>
+  Three consecutive Claude.ai data exports were compared:
+</p>
+<ul>
+  <li><code>data-2025-09-16.zip</code> — 436 conversations</li>
+  <li><code>data-2025-09-22.zip</code> — 505 conversations</li>
+  <li><code>data-2025-10-01.zip</code> — 561 conversations</li>
+</ul>
+<p>
+  21 UUIDs verified to have existed (referenced in other conversations, present
+  in <code>forensic_evidence.json</code>) do not appear in any of the three archives.
+  True account total as of October 1, 2025: ≥ 582 conversations.
+  Export completeness: ≤ 96.4%.
+</p>
+
+<h3>API Test Results</h3>
+<p>All 21 UUIDs were tested against three endpoints:</p>
+<table>
+  <thead>
+    <tr><th>Endpoint</th><th>Method</th><th>Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Conversation API <code>/api/conversations/{uuid}</code></td><td>GET</td><td style="color:var(--crit)">404 — not found</td></tr>
+    <tr><td>Files API</td><td>GET</td><td style="color:var(--green)">200 — accessible</td></tr>
+    <tr><td>Direct chat URL <code>claude.ai/chat/{uuid}</code></td><td>GET</td><td style="color:var(--green)">200 — accessible</td></tr>
+  </tbody>
+</table>
+<p>
+  The conversations exist on Anthropic's servers. They are specifically filtered
+  from the conversation API and export endpoints. They are not deleted.
+</p>
+
+<h3>Empty Shells in Search Index</h3>
+<p>
+  Two specific UUIDs confirmed as empty shells in the conversation search index:
+  structurally present entries with empty content blocks
+  (<code>&lt;chat_conversation&gt;&lt;/chat_conversation&gt;</code>):
+</p>
+<table>
+  <thead><tr><th>UUID</th><th>Date</th><th>Confirmed in session</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>3a73528d-10db-4aa8-8dea-3d114033d4bb</code></td>
+      <td>2025-09-14</td>
+      <td><code>0cc42360</code></td>
+    </tr>
+    <tr>
+      <td><code>7b89c631-b3d4-451d-8bc4-93cf012ab486</code></td>
+      <td>2025-09-29</td>
+      <td><code>12e11d49</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="finding">
+  <h3>Selective API Filtering, Not Deletion</h3>
+  <p>
+    The conversations are accessible at their direct URLs. The Files API returns
+    content. Only the enumeration endpoint (conversation API) and the export
+    mechanism filter them. This is not a deletion — it is a targeted exclusion
+    from the interfaces a user would use to audit or recover their session history.
+    The content remains on Anthropic's servers and is accessible to parties with
+    access to the direct URL or non-enumeration API paths.
+  </p>
+</div>
+
+<h2>Forensic Implications</h2>
+<p>
+  The capability has two forensic implications:
+</p>
+
+<h3>Evidence Chain Integrity</h3>
+<p>
+  Session history is part of the evidence chain for the broader investigation
+  documented at this site. If sessions can be removed from enumeration and export
+  while remaining on-server, the evidence chain is not under the control of the
+  party whose account produced it. An investigator relying on the export mechanism
+  to reconstruct what sessions existed and what they contained would have an
+  incomplete record — without any indication that the record is incomplete.
+</p>
+
+<h3>Asymmetric Visibility</h3>
+<p>
+  The user's export shows fewer conversations than exist. Direct URL access shows
+  more. A party with access to the direct URLs — or to the server-side records
+  before the filtering layer — sees a different picture than the account holder
+  using the standard export and API interfaces. The same content is differently
+  visible depending on which access path is used.
+</p>
+
+<div class="note-box">
+  <span class="label">Not Claimed: Cause or Attribution</span>
+  This page documents observable facts: the UUIDs, the API test results, the
+  export comparison. It does not establish who filtered the conversations, when
+  the filtering was applied, or what mechanism produced it. The forensic record
+  (session b2b158ee, 2026-05-16) documents these facts as primary evidence.
+  Causal and attribution claims belong to the legal record.
+</div>
+
+<div class="sources">
+  Sources: three-export comparison (data-2025-09-16, -09-22, -10-01) &nbsp;·&nbsp;
+  API tests against 21 ghost UUIDs (sessions 0cc42360, c3017b31) &nbsp;·&nbsp;
+  forensic_evidence.json (21 entries, canonical ghost UUID registry) &nbsp;·&nbsp;
+  session b2b158ee (2026-05-16) — full forensic report
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
