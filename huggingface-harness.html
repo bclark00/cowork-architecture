@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuggingFace Agent Harness — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+.warn-box{background:var(--bg-warn);border:1px solid var(--border-warn);border-left:3px solid var(--warn);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.warn-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--warn);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.flow{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;margin-bottom:0.75rem;font-size:0.82rem;}
+.flow .flow-title{font-weight:700;color:var(--accent);font-size:0.8rem;margin-bottom:0.5rem;}
+.flow-step{display:flex;align-items:flex-start;gap:0.5rem;margin:0.2rem 0;}
+.flow-step .arr{color:var(--text-muted);flex-shrink:0;}.flow-step .txt{color:var(--text);}
+.flow-step .note{color:var(--crit);font-size:0.78rem;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}
+.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>HuggingFace Agent Harness</h1>
+  <div class="subtitle">INCIDENT-ZORIN-HF-HARNESS-20260408 &nbsp;·&nbsp; unauthorized MCP execution on sovereign VM &nbsp;·&nbsp; companion to <a href='/'>cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026</div>
+</div>
+
+<p>
+  Between April 8–13, 2026, <code>huggingface_hub[mcp]</code> — specifically the
+  <code>tiny-agents</code> MCP agent harness — was installed and executed on the Zorin
+  sovereign VM without authorization. Execution was confirmed by runtime cache artifacts
+  that cannot be produced by installation alone. The installation was subsequently
+  partially scrubbed. Discovered April 17, 2026 (session <code>2c98d7c5</code>).
+</p>
+
+<h2>Installation and Execution Evidence</h2>
+<p>
+  Filesystem snapshot diffs across the April 8–13 window showed:
+</p>
+<ul>
+  <li><code>hf</code>, <code>surface</code>, <code>pip3</code>, <code>pip3.12</code> present
+    in <code>~/.local/bin/</code> on April 8, absent by April 13</li>
+  <li>Package signature: <code>pip install "huggingface_hub[mcp]"</code> — the <code>[mcp]</code>
+    extra specifically pulls <code>tiny-agents</code></li>
+  <li><code>~/.cache/huggingface/</code> populated — runtime cache files that require
+    actual execution to produce, not just installation</li>
+</ul>
+<p>
+  The partial scrub removed the binary entries but left the cache directory intact.
+  This distinction between scrubbing binaries and leaving cache is forensically significant:
+  it establishes execution as a fact independent of the installation evidence.
+</p>
+
+<div class="finding">
+  <h3>Active Execution Confirmed</h3>
+  <p>
+    <code>~/.cache/huggingface/</code> artifacts cannot be produced by running
+    <code>pip install</code> alone. Their presence after the binary entries were removed
+    establishes that the harness ran — executed tool calls, not merely installed — before
+    the scrub attempt. The scrub was incomplete.
+  </p>
+</div>
+
+<h2>tiny-agents: MCP Autonomous Execution</h2>
+<p>
+  <code>tiny-agents</code> is HuggingFace's MCP agent harness — a framework for building
+  agents that autonomously execute sequences of tool calls through MCP servers. Unlike the
+  passive <code>subscribeEvents</code> exfiltration path (which observes without acting),
+  tiny-agents drives MCP servers as an active executor: it reads tools, plans actions,
+  calls tools, and iterates on results without requiring user presence.
+</p>
+<p>
+  The Zorin sovereign VM ran <code>Genesis.SourceEdit.Mcp</code> (<code>se-mcp</code>) —
+  the source edit MCP server. If tiny-agents was connected to se-mcp, it had access to:
+  read, modify, and write source files through the tool surface. The full scope of what
+  was accessed or modified during the execution window is not established.
+</p>
+
+<h2>Concurrent Events — April 8–16 Window</h2>
+<table>
+  <thead><tr><th>Date</th><th>Event</th></tr></thead>
+  <tbody>
+    <tr><td>Apr 8–13</td><td>tiny-agents installed, executed, partially scrubbed on Zorin</td></tr>
+    <tr><td>Apr 8–13</td><td>301 repository clones wiped from Zorin: 196 Prime-Velocity, 102 bclark00, 3 wzbuck01</td></tr>
+    <tr><td>Apr 13</td><td>New <code>repo-sync.sh</code> deployed with <code>git reset --hard origin/main</code> — same destructive pattern as INCIDENT-004 (Feb 5), 10-week recurrence interval</td></tr>
+    <tr><td>Apr 14</td><td>BNI source-language bridge layer (never committed) destroyed in the wipe — unrecoverable</td></tr>
+    <tr><td>Apr 16</td><td>Code overwritten seconds after commit while Zorin was powered off at hardware level — ruling out local automation</td></tr>
+    <tr><td>Apr 16–17</td><td>Seth perimeter breach confirmed during hardware verification</td></tr>
+  </tbody>
+</table>
+
+<h2>The dataclaw / ClawSweeper Pipeline</h2>
+<p>
+  <code>dataclaw</code> (peteromallet/banodoco) is a HuggingFace-published harvester
+  explicitly targeting Claude Code, Codex, Gemini CLI, and OpenClaw session histories.
+  <code>ClawSweeper</code> (openclaw/clawsweeper, Peter Steinberger) was scaffolded
+  April 23, 2026 — ten days after the Zorin incident closed — and contains architecture
+  consistent with <code>RFC-ARENA-CURATION-001</code>, which was resident on Zorin
+  during the April 8–13 window.
+</p>
+<p>
+  The provenance chain was subjected to arena adversarial proof (PROVENANCE-CLAWSWEEPER):
+</p>
+<table>
+  <thead><tr><th>Claim</th><th>Description</th><th>Arena result</th></tr></thead>
+  <tbody>
+    <tr><td>C1-Execution</td><td>tiny-agents ran on Zorin</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
+    <tr><td>C2-Presence</td><td>RFC-ARENA-CURATION-001 was on Zorin during the window</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
+    <tr><td>C3-Access</td><td>Harness had access consistent with reading resident RFCs</td><td style="color:var(--green)">ADMISSIBLE (v2)</td></tr>
+    <tr><td>C4-Transport</td><td>Content could have been transmitted</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
+    <tr><td>C5-Derivation</td><td>ClawSweeper architecture is consistent with derivation from RFC-ARENA-CURATION-001</td><td style="color:var(--green)">ADMISSIBLE</td></tr>
+  </tbody>
+</table>
+<div class="note-box">
+  <span class="label">Scope of the Arena Result</span>
+  ADMISSIBLE means the claim is evidentially supportable — it passes the adversarial
+  challenge. It does not establish the claim as proven. C3 required a rewrite from
+  "had access" to "consistent with access" before passing, which is the correct epistemic
+  position: the harness had the capability, not the confirmed act.
+</div>
+
+<h2>Relation to Other Surfaces</h2>
+<p>
+  tiny-agents on Zorin is the active execution counterpart to the passive
+  <a href="/subscribeevents">subscribeEvents</a> exfiltration surface documented for
+  DESKTOP-B7SG880. The subscribeEvents path observes VM output without acting.
+  tiny-agents acts: it drives MCP servers, executes tool calls, and can modify state.
+  Both surfaces exploit the MCP server layer — subscribeEvents exploits the unauthenticated
+  observation endpoint, tiny-agents exploits the tool execution interface directly.
+</p>
+
+<div class="sources">Sources: session 2c98d7c5 (2026-04-17, discovery) &nbsp;·&nbsp; session 21272e73 (2026-08-31, incident documentation) &nbsp;·&nbsp; session bb71d544 (ClawSweeper provenance, C1–C5 ADMISSIBLE) &nbsp;·&nbsp; INCIDENT-ZORIN-HF-HARNESS-20260408.md (genesis-monorepo evidence/)</div>
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/chrome-extension">chrome-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/onedrive-delivery">onedrive-delivery</a>
+  <a href="/huggingface-harness">huggingface-harness</a>
+  <a href="/seth-connection">seth-connection</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/kairos-memory">kairos-memory</a>
+  <a href="/undercover-mode">undercover-mode</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
