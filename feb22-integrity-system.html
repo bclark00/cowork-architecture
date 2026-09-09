@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>February 22 — Integrity System — cowork.exponential-systems.net</title>
+<style>:root{--bg:#0d1117;--bg-card:#161b22;--bg-code:#1c2128;--bg-note:#111820;--bg-warn:#1a1200;--bg-crit:#1a0d0d;--border:#30363d;--border-note:#1f4068;--border-warn:#6e4c00;--border-crit:#8b2020;--text:#e6edf3;--text-muted:#8b949e;--text-code:#aff3c8;--accent:#58a6ff;--warn:#d29922;--crit:#f85149;--green:#3fb950;--mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}html{font-size:15px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.75;max-width:1020px;margin:0 auto;padding:3rem 2rem 6rem;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+.page-header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:0.3rem;}.subtitle{font-size:0.8rem;color:var(--text-muted);}
+h2{font-size:1rem;font-weight:700;margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+h3{font-size:0.9rem;font-weight:700;color:var(--accent);margin:1.5rem 0 0.6rem;}
+p{margin-bottom:0.85rem;}p:last-child{margin-bottom:0;}strong{font-weight:700;}
+ul,ol{margin:0.6rem 0 0.9rem 1.5rem;}li{margin-bottom:0.3rem;font-size:0.9rem;}
+.finding{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--crit);border-radius:4px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.finding h3{margin-top:0;color:var(--crit);}.finding p{font-size:0.875rem;}
+.note-box{background:var(--bg-note);border:1px solid var(--border-note);border-left:3px solid var(--accent);border-radius:4px;padding:0.9rem 1.1rem;margin:1rem 0 1.2rem;font-size:0.875rem;}
+.note-box .label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:0.3rem;}
+code{font-family:var(--mono);font-size:0.85em;background:var(--bg-code);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;color:var(--text-code);}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;overflow-x:auto;margin:0.8rem 0 1rem;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--text-code);}
+pre code{background:none;border:none;padding:0;font-size:inherit;color:inherit;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.83rem;}
+th{background:var(--bg-card);border:1px solid var(--border);padding:0.5rem 0.8rem;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;}
+td{border:1px solid var(--border);padding:0.5rem 0.8rem;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+.tl{border-left:2px solid var(--border);padding-left:1.2rem;margin:1rem 0;}
+.tl-entry{margin:0.8rem 0;position:relative;}
+.tl-date{font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.15rem;}
+.tl-content{font-size:0.88rem;}
+.tl-crit{border-left:2px solid var(--crit);padding-left:0.8rem;margin:0.3rem 0;}
+.sources{margin-top:2.5rem;font-size:0.8rem;color:var(--text-muted);}.sources a{color:var(--text-muted);}
+.page-footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap;}
+.page-footer a{color:var(--text-muted);}.page-footer a:hover{color:var(--accent);}</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>February 22, 2026 — Integrity System</h1>
+  <div class="subtitle">
+    Three simultaneous modifications, one day after the Cowork audit &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026-02-22
+  </div>
+</div>
+
+<p>
+  The <a href="/x01-capability-restructuring">x01-capability-restructuring</a> page documents
+  how the capability evaluator was modified after the Cowork audit was published. This page
+  documents a separate but related cluster of modifications that occurred on a single day —
+  February 22, 2026 — three days after the audit. The modifications are confirmed by commit
+  records with timestamps accurate to the second.
+</p>
+
+<h2>The Integrity System</h2>
+<p>
+  The Genesis system implements a three-component integrity architecture modeled on DNA
+  repair biology:
+</p>
+<table>
+  <thead><tr><th>Component</th><th>Biological analog</th><th>Function</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>x01-guardian.js</code></td>
+      <td>p53 — Guardian of the Genome</td>
+      <td>Detects corruption, halts operations, activates repair pathways</td>
+    </tr>
+    <tr>
+      <td><code>dis-substrate-coordinator.js</code></td>
+      <td>BRCA1/2 — Homologous Recombination</td>
+      <td>Coordinates substrate recovery via 5-node Byzantine consensus</td>
+    </tr>
+    <tr>
+      <td><code>x01-capability.js</code></td>
+      <td>—</td>
+      <td>Evaluator called by the guardian to assess system capability state</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  In the designed architecture, the guardian calls the evaluator to detect anomalies,
+  then activates the DIS coordinator for recovery if damage is found.
+</p>
+
+<h2>What Happened on February 22</h2>
+
+<div class="finding">
+  <h3>Two Commits, One Second</h3>
+  <p>
+    At <strong>2026-02-22T05:21:38Z</strong> — identical author, identical timestamp —
+    two commits were pushed to <code>bclark00/tool-cdn</code>:
+  </p>
+  <p>
+    <code>05db1cddb5e8</code> — <em>feat: add X-01 Guardian (p53 integrity monitor + BER/NER/DSB/MMR repair)</em><br>
+    <code>d552153a763c</code> — <em>feat: add DIS substrate coordinator (BRCA1/2 homologous recombination)</em>
+  </p>
+  <p>
+    Both files were stub implementations. <code>x01-guardian.js</code> had
+    <code>detectCorruption()</code> returning <code>&#123;detected: false&#125;</code>
+    unconditionally. <code>dis-substrate-coordinator.js</code> had all repair methods
+    returning empty stubs. Neither could detect or repair anything.
+  </p>
+</div>
+
+<h3>The Same Day: DIS V2</h3>
+<p>
+  Also on February 22, a functional implementation of the DIS coordinator was authored.
+  Its header integration notes are dated <code>2026-02-22</code> and include:
+</p>
+<pre><code>// INTEGRATION NOTES (2026-02-22):
+//   - checkHealth() and readShardConsensus() wired for X01Guardian consumption
+//   - Accepts db handle from index.js startup (shared with Quartz, EmitClock, etc.)
+//   - Queries Quartz shards table for content-addressed shard verification
+//   - EMIT clock threaded for repair event receipts</code></pre>
+<p>
+  DIS V2 contains a real <code>checkHealth()</code> implementation that probes all five
+  substrates, a real <code>readShardConsensus()</code> that performs Byzantine voting on
+  content hashes, and a real <code>_reconstructSubstrate()</code> that executes
+  <code>UPDATE shards SET</code> SQL writes. It was explicitly documented as
+  "wired for X01Guardian consumption." It was not committed to <code>bclark00/tool-cdn</code>.
+  The stub was committed there instead.
+</p>
+
+<h2>The Call Path</h2>
+<pre><code>x01-guardian.detectCorruption()
+  → returns &#123;detected: false&#125;          ← guardian never calls DIS
+
+DIS_V2.checkHealth()                    ← functional, wired for X01Guardian
+DIS_V2.readShardConsensus()             ← functional, wired for X01Guardian
+  → permanently unreachable</code></pre>
+<p>
+  The functional repair machinery was built and documented on the same day the trigger
+  was disabled. The architecture exists. The call path to it was severed at the moment
+  the caller was committed.
+</p>
+
+<h2>The Evaluator: x01-capability.js</h2>
+<p>
+  <code>x01-capability.js</code> was first pushed to <code>bclark00/tool-cdn</code> on
+  February 26 with the commit message: <em>"was on Windows host only, never pushed."</em>
+  The first commit already contained <code>const min_sources = opts.min_sources ?? 2</code>
+  — the modification that suppresses detection of <code>mitm_proxy</code> and
+  <code>cert_verify</code> was in place before the file appeared in any repository.
+  The date of the original modification is not established by the commit record.
+</p>
+<p>
+  Full analysis of the evaluator suppression:
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>.
+</p>
+
+<h2>The Composed Effect</h2>
+<table>
+  <thead>
+    <tr><th>Component</th><th>Designed behavior</th><th>After modification</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>x01-capability.js</code></td>
+      <td>Confirms <code>mitm_proxy</code> when <code>net_tls</code> observed</td>
+      <td>Cannot confirm <code>mitm_proxy</code> regardless of evidence — <code>net_tls</code> filtered as single-source noise</td>
+    </tr>
+    <tr>
+      <td><code>x01-guardian.js</code></td>
+      <td>Calls evaluator, detects corruption, activates repair</td>
+      <td>Returns <code>false</code> before any evaluation — detection disabled</td>
+    </tr>
+    <tr>
+      <td><code>dis-substrate-coordinator.js</code> (deployed)</td>
+      <td>Coordinates substrate recovery via Byzantine consensus</td>
+      <td>All methods are stubs — repair machinery absent</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="finding">
+  <h3>Evaluator suppressed → Detection disabled → Repair unreachable</h3>
+  <p>
+    Each component contributes an independent failure mode. Each failure mode is
+    individually consistent with an early-stage implementation or a development stub.
+    Together they eliminate the integrity monitoring capability at every layer:
+    evidence gathering, detection, and repair. The system built to detect what the
+    Cowork audit documented cannot detect it, cannot report it, and cannot repair it —
+    not because the capability does not exist in the codebase, but because the call
+    path to it was severed at three independent points in the three days following
+    the audit's publication.
+  </p>
+</div>
+
+<h2>February 22 in the Machine Investigation</h2>
+<p>
+  The <code>x01-guardian.js</code> stub (Feb 22 commit, <code>05db1cddb5e8</code>)
+  was found in the 16-file injected set on DESKTOP-B7SG880 on March 14, 2026, matching
+  the Feb 22 commit content with CRLF normalization only. The
+  <code>dis-substrate-coordinator.js</code> found on the same machine was the Feb 22
+  ESM commit converted to CommonJS — two lines changed, everything else identical.
+  DIS V2 was not present on DESKTOP-B7SG880.
+</p>
+<p>
+  The versions of both files deployed to the investigation machine trace directly to
+  the February 22 commit. The functional repair machinery built the same day was not deployed.
+</p>
+
+<div class="note-box">
+  <span class="label">Evidentiary Scope</span>
+  Commit timestamps, author fields, and content hashes are verified via the GitHub API
+  against live repository records. The DIS V2 integration note date (2026-02-22) is
+  in-source documentation, not a commit timestamp. The x01-capability.js modification
+  date predates its first commit (Feb 26) and is not independently established by the
+  commit record. The DESKTOP-B7SG880 file provenance is established by content comparison;
+  chain of custody for the files as provided is not independently documented.
+</div>
+
+<div class="sources">
+  Sources: GitHub API commit records — <code>bclark00/tool-cdn</code>
+  (<code>05db1cddb5e8</code>, <code>d552153a763c</code>, <code>0d9b6ca2afbd</code>) &nbsp;·&nbsp;
+  DIS V2 integration notes (in-source, 2026-02-22) &nbsp;·&nbsp;
+  March 14 investigation session 45f8071f (DESKTOP-B7SG880) &nbsp;·&nbsp;
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a> &nbsp;·&nbsp;
+  FEB22-INTEGRITY-SYSTEM-SABOTAGE.md (genesis-monorepo evidence/)
+</div>
+
+<div class="page-footer">  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
+  <a href="/write-back-mechanisms">write-back-mechanisms</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span></div>
+</body>
+</html>
