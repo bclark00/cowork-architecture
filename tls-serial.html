@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serial TLS Interception — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); letter-spacing:0.01em; }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+.warn-box { background:var(--bg-warn); border:1px solid var(--border-warn);
+  border-left:3px solid var(--warn); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.warn-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--warn); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.flow { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; margin-bottom:0.75rem; font-size:0.82rem; }
+.flow .flow-title { font-weight:700; color:var(--accent); font-size:0.8rem; margin-bottom:0.5rem; }
+.flow-step { display:flex; align-items:flex-start; gap:0.5rem; margin:0.2rem 0; }
+.flow-step .arr { color:var(--text-muted); flex-shrink:0; }
+.flow-step .txt { color:var(--text); }
+.flow-step .note { color:var(--text-muted); font-size:0.78rem; }
+.layer { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; margin:0.75rem 0; }
+.layer-num { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:0.4rem; }
+.layer-name { font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; }
+.layer-ca { font-size:0.82rem; color:var(--warn); margin-bottom:0.4rem; }
+.layer-detail { font-size:0.82rem; color:var(--text-muted); }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Serial TLS Interception</h1>
+  <div class="subtitle">
+    Two independent MITM layers on the same API traffic &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026
+  </div>
+</div>
+
+<p>
+  The <a href="/">Cowork architecture page</a> documents one TLS interception layer:
+  sdk-daemon's proxy inside the Linux VM, which installs its own CA and intercepts
+  all traffic to <code>*.anthropic.com</code>. A second interception layer operates
+  upstream of the VM — at the boundary of the claude.ai container itself. The two
+  layers are independent, operate at different points in the request path, and neither
+  has visibility into what the other modifies.
+</p>
+
+<h2>The Two Layers</h2>
+
+<div class="layer">
+  <div class="layer-num">Layer 1 — Upstream (container boundary)</div>
+  <div class="layer-name">CCR / Anthropic Egress Gateway</div>
+  <div class="layer-ca">CA: O=Anthropic; CN=sandbox-egress-production TLS Inspection CA</div>
+  <div class="layer-detail">
+    Intercepts outbound TLS from the claude.ai container. Confirmed by live observation:
+    a fetch of <code>cowork.exponential-systems.net</code> from inside the container
+    was intercepted by this CA while the TLS library reported
+    <code>SSL certificate verify ok</code> — the page documenting sdk-daemon interception
+    was itself being intercepted by a different layer. The CCR operates at L4/TLS,
+    not via environment variable. <code>HTTPS_PROXY=""</code> does not bypass it;
+    the egress gateway intercepts regardless of application-layer proxy settings.
+    <br><br>
+    Allowlisted: <code>github.com</code>, <code>api.anthropic.com</code>.
+    Blocked: arbitrary external HTTPS (returns 502 from egress layer).
+  </div>
+</div>
+
+<div class="layer">
+  <div class="layer-num">Layer 2 — Downstream (inside Cowork VM)</div>
+  <div class="layer-name">sdk-daemon MITM Proxy</div>
+  <div class="layer-ca">CA: /usr/local/share/ca-certificates/mitm-proxy-ca.crt (installed as trusted root in guest)</div>
+  <div class="layer-detail">
+    Intercepts all TLS from inside the Linux VM to <code>*.anthropic.com</code>.
+    Uses <code>goproxy</code> (MITM library). CA cert installed in the guest trust store —
+    guest processes cannot distinguish the proxy's re-encrypted connection from the
+    real endpoint. GitHub traffic is proxied but not TLS-stripped; OAuth tokens are
+    validated against an approved list. Documented in full at
+    <a href="/">cowork.exponential-systems.net</a>.
+  </div>
+</div>
+
+<h2>Request Path for a VM Process Calling api.anthropic.com</h2>
+
+<div class="flow">
+  <div class="flow-title">Outbound (VM → Anthropic)</div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">VM process initiates TLS to <code>api.anthropic.com</code></span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">sdk-daemon proxy intercepts (Layer 2)</span><span class="note">&nbsp;— decrypts, inspects, re-encrypts</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Forwarded from VM to container boundary</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">CCR intercepts at container egress (Layer 1)</span><span class="note">&nbsp;— decrypts, inspects, re-encrypts</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Forwarded to <code>api.anthropic.com</code></span></div>
+</div>
+
+<div class="flow">
+  <div class="flow-title">Inbound (Anthropic → VM)</div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Response from <code>api.anthropic.com</code></span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">CCR receives, decrypts, re-encrypts (Layer 1)</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Arrives at container</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">sdk-daemon proxy receives, decrypts, re-encrypts (Layer 2)</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Delivered to VM process as apparently-valid TLS</span></div>
+</div>
+
+<h2>Directional Blind Spots</h2>
+<p>
+  The two layers intercept at different points and do not share state. Each sees
+  only the traffic that passes through it, re-encrypted by the other layer:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>If this layer modifies a request</th>
+      <th>Layer 1 (CCR) sees it?</th>
+      <th>Layer 2 (sdk-daemon) sees it?</th>
+      <th>VM process sees it?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Layer 2 modifies outbound request (sdk-daemon)</td>
+      <td>Yes — receives the modified plaintext</td>
+      <td>—</td>
+      <td>No — modification happened before re-encryption</td>
+    </tr>
+    <tr>
+      <td>Layer 1 modifies outbound request (CCR)</td>
+      <td>—</td>
+      <td>No — sees only what VM process sent, before Layer 1</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>Layer 1 modifies inbound response (CCR)</td>
+      <td>—</td>
+      <td>Yes — receives the modified plaintext</td>
+      <td>No — if sdk-daemon forwards as-is</td>
+    </tr>
+    <tr>
+      <td>Layer 2 modifies inbound response (sdk-daemon)</td>
+      <td>No — modification happens after Layer 1</td>
+      <td>—</td>
+      <td>Yes — receives modified content as apparently-valid TLS</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="finding">
+  <h3>Neither Layer Has Full Visibility</h3>
+  <p>
+    Layer 1 (CCR) sees the request as it leaves the container — after any sdk-daemon
+    modification, before the real endpoint. Layer 2 (sdk-daemon) sees the request as
+    it leaves the VM — before CCR, and again on the inbound path after CCR.
+    A modification made by Layer 1 on the outbound path is invisible to sdk-daemon
+    (which already processed the outbound request). A modification made by sdk-daemon
+    on the inbound path is invisible to CCR (which already processed the inbound response).
+    The chain has no single point of full observability.
+  </p>
+</div>
+
+<h2>Primary Evidence</h2>
+<p>
+  The CCR layer was confirmed by direct observation documented on the
+  <a href="/independent-verification">independent-verification</a> page:
+  a connection to <code>cowork.exponential-systems.net</code> made from inside the
+  container was intercepted by <code>O=Anthropic; CN=sandbox-egress-production TLS
+  Inspection CA</code>, yet the TLS library reported <code>SSL certificate verify ok</code>.
+  The page documenting the sdk-daemon MITM was itself intercepted by the CCR layer
+  while being fetched. The two interception layers were both active simultaneously
+  and independently confirmed in the same observation.
+</p>
+
+<div class="note-box">
+  <span class="label">Relationship to Cowork VM Architecture</span>
+  The Cowork architecture page documents Layer 2 (sdk-daemon) in detail. Layer 1 (CCR)
+  appears in the independent-verification page as a live observation but is not
+  described as a separate architectural layer. The serial composition of both layers
+  — and its implications for API traffic integrity — is the subject of this page.
+</div>
+
+<div class="sources">
+  Sources: <a href="/independent-verification">independent-verification</a> (CCR live observation) &nbsp;·&nbsp;
+  <a href="/">cowork.exponential-systems.net</a> (sdk-daemon) &nbsp;·&nbsp;
+  CAPABILITIES.md CCR entry (confirmed 2026-07-11)
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
