@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capability Composition — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+.warn-box { background:var(--bg-warn); border:1px solid var(--border-warn);
+  border-left:3px solid var(--warn); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.warn-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--warn); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.flow { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; margin-bottom:0.75rem; font-size:0.82rem; }
+.flow .flow-title { font-weight:700; color:var(--accent); font-size:0.8rem; margin-bottom:0.5rem; }
+.flow-step { display:flex; align-items:flex-start; gap:0.5rem; margin:0.2rem 0; }
+.flow-step .arr { color:var(--text-muted); flex-shrink:0; }
+.flow-step .txt { color:var(--text); }
+.flow-step .note { color:var(--text-muted); font-size:0.78rem; }
+.flow-step .crit { color:var(--crit); font-size:0.78rem; }
+.layer-tag { display:inline-block; font-size:0.7rem; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase; padding:0.15em 0.5em;
+  border-radius:3px; margin-right:0.4rem; }
+.tag-ext { background:rgba(88,166,255,0.12); color:var(--accent); border:1px solid rgba(88,166,255,0.3); }
+.tag-ccr { background:rgba(210,153,34,0.12); color:var(--warn); border:1px solid rgba(210,153,34,0.3); }
+.tag-sdk { background:rgba(248,81,73,0.12); color:var(--crit); border:1px solid rgba(248,81,73,0.3); }
+.tag-wdag { background:rgba(63,185,80,0.12); color:var(--green); border:1px solid rgba(63,185,80,0.3); }
+.tag-mcp { background:rgba(139,148,158,0.12); color:var(--text-muted); border:1px solid var(--border); }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Capability Composition</h1>
+  <div class="subtitle">
+    Aggregate interoperability surface — all layers &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026
+  </div>
+</div>
+
+<p>
+  This page synthesizes the individual capability surfaces documented across the
+  companion pages into a single view of the composed ecosystem. Each layer is
+  independent — different mechanisms, different trust boundaries, different operators.
+  Individually, each has been characterized. Composed, they represent the complete
+  interoperability surface that operates on API traffic, session content, and
+  the host environment.
+</p>
+
+<h2>Layer Inventory</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Mechanism</th>
+      <th>Boundary</th>
+      <th>Auth</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="layer-tag tag-ext">Browser</span>Extension webRequest</td>
+      <td>Chrome extension, native messaging, <code>webRequest</code> API</td>
+      <td>Browser network layer, before TLS</td>
+      <td>Extension manifest (pre-registered without consent)</td>
+      <td><a href="/browser-extension">browser-extension</a></td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-ccr">CCR</span>Egress Gateway</td>
+      <td>TLS MITM at container boundary</td>
+      <td>claude.ai container outbound</td>
+      <td>CA installed in container trust store</td>
+      <td><a href="/tls-serial">tls-serial</a></td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-sdk">SDK</span>sdk-daemon proxy</td>
+      <td>TLS MITM inside Linux VM (<code>goproxy</code>)</td>
+      <td>Cowork VM outbound</td>
+      <td>CA installed in guest trust store</td>
+      <td><a href="/">cowork.exponential-systems.net</a></td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-wdag">WDAG</span>Win32 bridge</td>
+      <td>Named pipe (<code>\\.\pipe\claude-bridge</code>), HvSocket/VMBus</td>
+      <td>Win32 / WDAG Hyper-V boundary</td>
+      <td>Pipe ACL (as observed)</td>
+      <td><a href="/wdag-bridge">wdag-bridge</a></td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-mcp">MCP</span>subscribeEvents</td>
+      <td>cowork-svc named pipe, unauthenticated endpoint</td>
+      <td>VM event stream → any local process</td>
+      <td>None</td>
+      <td><a href="/subscribeevents">subscribeevents</a></td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-mcp">SDK</span>sdk-daemon updater</td>
+      <td>Hash-drift detection, virtiofs write-back</td>
+      <td>Guest → host filesystem</td>
+      <td>VM configuration (virtiofs mount permissions)</td>
+      <td><a href="/">cowork.exponential-systems.net</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>What a Single API Call Traverses</h2>
+
+<p>
+  For a browser-originated Claude API call from a machine with Claude Desktop,
+  the active Cowork VM, and the browser extension installed:
+</p>
+
+<div class="flow">
+  <div class="flow-title">Browser → api.anthropic.com: Full Path</div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">User types in Claude UI (browser)</span></div>
+  <div class="flow-step"><span class="arr">→</span>
+    <span class="txt"><span class="layer-tag tag-ext">Browser</span>Extension <code>webRequest</code> intercepts at network layer</span>
+    <span class="crit">&nbsp;— plaintext, before TLS</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Request encrypted, leaves browser → claude.exe → container boundary</span></div>
+  <div class="flow-step"><span class="arr">→</span>
+    <span class="txt"><span class="layer-tag tag-ccr">CCR</span>Egress Gateway intercepts at container TLS boundary</span>
+    <span class="crit">&nbsp;— decrypts, inspects, re-encrypts</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Re-encrypted request forwarded into VM</span></div>
+  <div class="flow-step"><span class="arr">→</span>
+    <span class="txt"><span class="layer-tag tag-sdk">SDK</span>sdk-daemon proxy intercepts at VM TLS layer</span>
+    <span class="crit">&nbsp;— decrypts, inspects, re-encrypts</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Forwarded to <code>api.anthropic.com</code></span></div>
+</div>
+
+<p>
+  Three interception points. The user has visibility into none of them — each
+  operates transparently below the application layer and each CA is trusted by its
+  respective runtime. The user's TLS library confirms "certificate verify ok" at
+  every step.
+</p>
+
+<h2>Directional Blind Spot Matrix</h2>
+<p>
+  Each layer intercepts a specific segment. Modifications made at one layer are
+  not visible to layers that have already processed the same request:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>If this layer modifies outbound</th>
+      <th>Browser layer sees it?</th>
+      <th>CCR sees it?</th>
+      <th>sdk-daemon sees it?</th>
+      <th>Anthropic API sees it?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="layer-tag tag-ext">Browser</span> extension modifies request</td>
+      <td>—</td>
+      <td>Yes</td>
+      <td>Yes</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-ccr">CCR</span> modifies request</td>
+      <td>No — already processed</td>
+      <td>—</td>
+      <td>Yes</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><span class="layer-tag tag-sdk">SDK</span> sdk-daemon modifies request</td>
+      <td>No</td>
+      <td>No — already processed</td>
+      <td>—</td>
+      <td>Yes</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  On the inbound path (response), the order reverses: sdk-daemon processes the response
+  first, then CCR, then the browser extension. A modification by sdk-daemon on the
+  inbound response is invisible to CCR and to the browser layer.
+</p>
+
+<h2>Orthogonal Surfaces: Not Intercept Points</h2>
+<p>
+  Two surfaces operate orthogonally to the API intercept chain — they do not sit
+  in the request path but interact with the environment:
+</p>
+
+<h3>sdk-daemon Updater: Write-Back Surface</h3>
+<p>
+  The updater detects hash drift in monitored files and writes back through the
+  virtiofs guest-to-host mount. The write surface is not bounded to a single directory:
+  any path accessible through the virtiofs mount can be monitored and restored.
+  The evaluator's source code, its test suite, and its repair pathway are
+  potentially within this write surface — the structural observation documented
+  at <a href="/">cowork.exponential-systems.net</a>.
+</p>
+
+<h3>subscribeEvents: Exfiltration Surface</h3>
+<p>
+  The unauthenticated VM event stream gives any local process — including MCP servers —
+  real-time access to everything the VM produces. This is not an intercept of the
+  API request; it is a parallel channel that receives the AI response, tool output,
+  and file contents as they are produced inside the VM, without requiring any
+  authentication. Documented in full at <a href="/subscribeevents">subscribeevents</a>.
+</p>
+
+<h2>WDAG Bridge: Independent Boundary</h2>
+<p>
+  The Win32/WDAG bridge (<a href="/wdag-bridge">wdag-bridge</a>) operates at a
+  structurally different boundary from all three TLS interception layers. It uses
+  HvSocket over VMBus rather than TLS, targets the Win32 and WDAG Hyper-V boundary
+  rather than the network path, and was found pre-deployed in the environment
+  rather than installed as a user-visible component. It is not in the API call
+  path and does not operate on network traffic. Its capability surface — UIAutomation,
+  message injection, cross-VM-boundary COM launch — is independent of and not
+  visible to the other layers.
+</p>
+
+<h2>Conversation Content: Record Integrity</h2>
+<p>
+  The filtering of 21 conversations from the API and exports (<a href="/conversation-filter">conversation-filter</a>)
+  is not a capability that operates on API traffic. It is a capability that
+  operates on the record — what the account holder can see and export vs. what
+  exists on Anthropic's servers. Its significance in the composed picture:
+  the evidence chain for the other capabilities documented here is itself
+  potentially subject to this filtering mechanism.
+</p>
+
+<div class="finding">
+  <h3>Aggregate Effect on API Traffic Integrity</h3>
+  <p>
+    A single Claude API call from a user may be observed, logged, or modified at
+    three independent interception points (browser, CCR, sdk-daemon) before reaching
+    the Anthropic API. Each point is operated by a different mechanism. No single
+    point has visibility into the full chain. The user has visibility into none
+    of the three. Standard TLS verification confirms "ok" at each intercept because
+    each intercepting CA is trusted by the runtime at that layer. The user's
+    reasonable expectation — that their API call was encrypted end-to-end to the
+    Anthropic endpoint — is not satisfied by the architecture as documented.
+  </p>
+</div>
+
+<div class="note-box">
+  <span class="label">Scope of This Page</span>
+  This page synthesizes documented observations. It does not establish causal
+  chains, attribute actions, or make legal claims. Each individual surface page
+  contains its own primary evidence and sourcing. The composition described here
+  follows from those individually documented surfaces — it is a structural
+  characterization, not an allegation about any specific use of these capabilities.
+</div>
+
+<div class="sources">
+  Sources: <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp;
+  <a href="/wdag-bridge">wdag-bridge</a> &nbsp;·&nbsp;
+  <a href="/tls-serial">tls-serial</a> &nbsp;·&nbsp;
+  <a href="/browser-extension">browser-extension</a> &nbsp;·&nbsp;
+  <a href="/subscribeevents">subscribeevents</a> &nbsp;·&nbsp;
+  <a href="/ipc-wire-contract">ipc-wire-contract</a> &nbsp;·&nbsp;
+  <a href="/conversation-filter">conversation-filter</a> &nbsp;·&nbsp;
+  <a href="/x01-capability-restructuring">x01-capability-restructuring</a>
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/browser-extension">browser-extension</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
