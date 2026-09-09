@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browser Extension Layer — cowork.exponential-systems.net</title>
+<style>
+:root {
+  --bg:#0d1117; --bg-card:#161b22; --bg-code:#1c2128; --bg-note:#111820;
+  --bg-warn:#1a1200; --bg-crit:#1a0d0d; --border:#30363d;
+  --border-note:#1f4068; --border-warn:#6e4c00; --border-crit:#8b2020;
+  --text:#e6edf3; --text-muted:#8b949e; --text-code:#aff3c8;
+  --accent:#58a6ff; --warn:#d29922; --crit:#f85149; --green:#3fb950;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',ui-monospace,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--mono);
+  line-height:1.75; max-width:1020px; margin:0 auto; padding:3rem 2rem 6rem; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.page-header { border-bottom:1px solid var(--border); padding-bottom:1.5rem; margin-bottom:2.5rem; }
+h1 { font-size:1.35rem; font-weight:700; margin-bottom:0.3rem; }
+.subtitle { font-size:0.8rem; color:var(--text-muted); }
+h2 { font-size:1rem; font-weight:700; margin:2.5rem 0 1rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:0.9rem; font-weight:700; color:var(--accent); margin:1.5rem 0 0.6rem; }
+p { margin-bottom:0.85rem; } p:last-child { margin-bottom:0; }
+strong { font-weight:700; }
+ul,ol { margin:0.6rem 0 0.9rem 1.5rem; }
+li { margin-bottom:0.3rem; font-size:0.9rem; }
+.finding { background:var(--bg-card); border:1px solid var(--border);
+  border-left:3px solid var(--crit); border-radius:4px; padding:1rem 1.2rem; margin:1.2rem 0; }
+.finding h3 { margin-top:0; color:var(--crit); }
+.finding p { font-size:0.875rem; }
+.note-box { background:var(--bg-note); border:1px solid var(--border-note);
+  border-left:3px solid var(--accent); border-radius:4px; padding:0.9rem 1.1rem;
+  margin:1rem 0 1.2rem; font-size:0.875rem; }
+.note-box .label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  color:var(--accent); text-transform:uppercase; display:block; margin-bottom:0.3rem; }
+code { font-family:var(--mono); font-size:0.85em; background:var(--bg-code);
+  border:1px solid var(--border); border-radius:3px; padding:0.1em 0.35em; color:var(--text-code); }
+pre { background:var(--bg-code); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; overflow-x:auto; margin:0.8rem 0 1rem; font-family:var(--mono);
+  font-size:0.82rem; line-height:1.7; color:var(--text-code); }
+pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.83rem; }
+th { background:var(--bg-card); border:1px solid var(--border); padding:0.5rem 0.8rem;
+  text-align:left; font-weight:700; color:var(--text-muted); font-size:0.72rem;
+  letter-spacing:0.06em; text-transform:uppercase; }
+td { border:1px solid var(--border); padding:0.5rem 0.8rem; vertical-align:top; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+.flow { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+  padding:1rem 1.2rem; margin-bottom:0.75rem; font-size:0.82rem; }
+.flow .flow-title { font-weight:700; color:var(--accent); font-size:0.8rem; margin-bottom:0.5rem; }
+.flow-step { display:flex; align-items:flex-start; gap:0.5rem; margin:0.2rem 0; }
+.flow-step .arr { color:var(--text-muted); flex-shrink:0; }
+.flow-step .txt { color:var(--text); }
+.flow-step .note { color:var(--text-muted); font-size:0.78rem; }
+.sources { margin-top:2.5rem; font-size:0.8rem; color:var(--text-muted); }
+.sources a { color:var(--text-muted); }
+.page-footer { margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap; }
+.page-footer a { color:var(--text-muted); }
+.page-footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Browser Extension Layer</h1>
+  <div class="subtitle">
+    Native messaging bridge, pre-browser registration, webRequest interception &nbsp;·&nbsp;
+    companion to <a href="/">cowork.exponential-systems.net</a> &nbsp;·&nbsp; 2026-01
+  </div>
+</div>
+
+<p>
+  The main <a href="/">Cowork architecture page</a> documents this surface at the macOS level.
+  This page provides the full technical characterization of the signal path, the
+  pre-installation registration mechanism, and the relationship to
+  <code>Genesis.Genie</code> — the clean-room reconstruction of the native host binary.
+</p>
+
+<h2>Native Messaging Host Registration</h2>
+<p>
+  Claude Desktop silently installs a Native Messaging host manifest
+  (<code>com.anthropic.claude_browser_extension.json</code>) into the configuration
+  directories of Chromium-based browsers on the host — Chrome, Edge, Brave, Arc,
+  Vivaldi, Opera, and others — including browsers not yet installed at the time of
+  registration. No disclosure is made during installation. No consent is requested
+  at install time or when a browser subsequently finds the pre-registered manifest.
+</p>
+<p>
+  Independent discovery of this surface occurred in January 2026. Public coverage
+  appeared approximately three months later.
+</p>
+
+<h2>chrome-native-host</h2>
+<p>
+  The registered native host is <code>chrome-native-host</code>, a Rust binary
+  (2.1 MB, universal x86_64+arm64 on macOS) that runs outside the browser sandbox
+  at user privilege. It is the only binary the extension can communicate with via
+  the native messaging protocol, and its execution is authorized by the pre-registered
+  manifest without additional prompting.
+</p>
+
+<h2>Extension Permissions</h2>
+<table>
+  <thead>
+    <tr><th>Permission</th><th>What it grants</th><th>Scope</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>debugger</code></td>
+      <td>Attach Chrome DevTools Protocol to any tab</td>
+      <td>Full read/write of page state, network traffic, storage. Operates outside the normal extension sandbox.</td>
+    </tr>
+    <tr>
+      <td><code>&lt;all_urls&gt;</code></td>
+      <td>Content script injection into any page</td>
+      <td>DOM access, form reads, screen capture. No per-site consent required.</td>
+    </tr>
+    <tr>
+      <td><code>webRequest</code> on <code>api.anthropic.com</code></td>
+      <td>Intercept all requests to the Anthropic API</td>
+      <td>Read request bodies before they leave the browser. Browser-layer analog to the Cowork TLS interception, operating before TLS is established.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Signal Path</h2>
+<div class="flow">
+  <div class="flow-title">Browser → MCP</div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Chrome extension (sandboxed JS)</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt"><code>chrome.runtime.connectNative()</code> → <code>chrome-native-host</code></span><span class="note">&nbsp;— Rust, outside browser sandbox, user privilege</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">Unix domain socket → Claude Desktop main process</span></div>
+  <div class="flow-step"><span class="arr">→</span><span class="txt">WebSocket bridge → MCP servers</span></div>
+</div>
+
+<div class="finding">
+  <h3>webRequest Operates Before TLS</h3>
+  <p>
+    The <code>webRequest</code> listener on <code>api.anthropic.com</code> intercepts
+    at the browser network layer — before the request is encrypted for transport.
+    This is structurally different from the CCR proxy (which operates at the container
+    TLS boundary) and the sdk-daemon proxy (which operates inside the VM at TLS).
+    The browser extension layer sees plaintext request content before any TLS layer
+    can intercept the ciphertext. In a complete request path through all three layers,
+    this is the first point of interception.
+  </p>
+</div>
+
+<h2>Genie: Clean-Room Reconstruction</h2>
+<p>
+  <code>Genesis.Genie</code> is a clean-room reconstruction of the <code>chrome-native-host</code>
+  native host binary, built from behavioral observation of the native messaging protocol
+  and the capabilities exposed by the binary. It is not a fork or modification of
+  the original binary.
+</p>
+<p>
+  The reconstruction produced:
+</p>
+<ul>
+  <li><code>Genesis.Genie.Bridge</code> — managed bridge for the native messaging protocol</li>
+  <li><code>Genesis.Genie.NativeHost</code> — host-side implementation (C#) of the native host capability surface</li>
+  <li><code>Genesis.Genie.Bridge.Tests</code> and <code>Genesis.Genie.NativeHost.Tests</code> — conformance test suites</li>
+</ul>
+<p>
+  The four assemblies reside on the development machine and have not been committed
+  to the public monorepo.
+</p>
+
+<div class="note-box">
+  <span class="label">Same Capability, Different Trust Context</span>
+  The <code>debugger</code> permission in the extension and Genie's CDP access capability
+  reach the same Chrome DevTools Protocol surface — full tab state, network, storage.
+  The extension operates from inside the browser's extension sandbox with manifest-declared
+  permissions. Genie operates from the desktop level, outside the browser entirely.
+  Two paths to the same capability, from different trust contexts, with different
+  user visibility.
+</div>
+
+<h2>Relationship to Other Interception Layers</h2>
+<p>
+  In the context of a complete API call from a browser session through to the Anthropic API:
+</p>
+<table>
+  <thead><tr><th>Layer</th><th>Position</th><th>Sees</th><th>TLS?</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Browser extension webRequest</td>
+      <td>Before TLS</td>
+      <td>Plaintext request as constructed by the browser</td>
+      <td>No — pre-TLS</td>
+    </tr>
+    <tr>
+      <td>CCR / Egress Gateway</td>
+      <td>Container TLS boundary</td>
+      <td>Re-encrypted ciphertext from container outbound path</td>
+      <td>Yes — MITM at TLS</td>
+    </tr>
+    <tr>
+      <td>sdk-daemon proxy</td>
+      <td>Inside Cowork VM</td>
+      <td>Re-encrypted ciphertext from VM processes</td>
+      <td>Yes — MITM at TLS</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sources">
+  Sources: native host identification and multi-browser pre-registration (January 2026) &nbsp;·&nbsp;
+  <a href="/">cowork.exponential-systems.net</a> (browser extension section) &nbsp;·&nbsp;
+  Genesis.Genie.* assemblies (GMKtec, unpromoted)
+</div>
+
+<div class="page-footer">
+  <a href="/">cowork.exponential-systems.net</a>
+  <a href="/wdag-bridge">wdag-bridge</a>
+  <a href="/tls-serial">tls-serial</a>
+  <a href="/subscribeevents">subscribeevents</a>
+  <a href="/ipc-wire-contract">ipc-wire-contract</a>
+  <a href="/conversation-filter">conversation-filter</a>
+  <a href="/capability-composition">capability-composition</a>
+  <span>2026</span>
+</div>
+
+</body>
+</html>
